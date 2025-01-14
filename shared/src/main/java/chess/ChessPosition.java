@@ -8,7 +8,12 @@ package chess;
  */
 public class ChessPosition {
 
+    // Global variables for current row and col position of piece
+    int row, col;
+
     public ChessPosition(int row, int col) {
+        this.row = row;
+        this.col = col;
     }
 
     /**
@@ -16,7 +21,15 @@ public class ChessPosition {
      * 1 codes for the bottom row
      */
     public int getRow() {
-        throw new RuntimeException("Not implemented");
+        return row;
+    }
+
+    /*
+     * Sets the row of a given piece
+     * @param row The row to set (1-8)
+     */
+    public void setRow(int row){
+        this.row = row;
     }
 
     /**
@@ -24,6 +37,14 @@ public class ChessPosition {
      * 1 codes for the left row
      */
     public int getColumn() {
-        throw new RuntimeException("Not implemented");
+        return col;
+    }
+
+    /*
+     * Sets the column of a piece
+     * @param col The column to set (1-8)
+     */
+    public void setCol(int col){
+        this.col = col;
     }
 }
