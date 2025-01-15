@@ -20,14 +20,14 @@ public class ChessPieceWithPosition {
     /*
      * Returns the piece itself
      */
-    public ChessPiece returnPiece(){
+    public ChessPiece getPiece(){
         return piece;
     }
 
     /*
      * Returns the position of the piece
      */
-    public ChessPosition returnPosition(){
+    public ChessPosition getPosition(){
         return position;
     }
 

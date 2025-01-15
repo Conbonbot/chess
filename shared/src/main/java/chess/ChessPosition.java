@@ -1,5 +1,7 @@
 package chess;
 
+import java.util.Objects;
+
 /**
  * Represents a single square position on a chess board
  * <p>
@@ -9,7 +11,7 @@ package chess;
 public class ChessPosition {
 
     // Global variables for current row and col position of piece
-    int row, col;
+    private int row, col;
 
     public ChessPosition(int row, int col) {
         this.row = row;
@@ -46,5 +48,23 @@ public class ChessPosition {
      */
     public void setCol(int col){
         this.col = col;
+    }
+
+    /*
+     * Overriden equals 
+     */
+    @Override
+    public boolean equals(Object obj){
+        if(this == obj)
+            return true;
+        if(obj == null || getClass() != obj.getClass())
+            return false;
+        ChessPosition check = (ChessPosition) obj;
+        return this.row == check.getRow() && this.col == check.getColumn();
+    }
+
+    @Override
+    public int hashCode(){
+        return Objects.hash(row, col);
     }
 }

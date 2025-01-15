@@ -1,8 +1,7 @@
 package chess;
 
 import java.util.ArrayList;
-
-import javax.management.monitor.GaugeMonitor;
+import java.util.Arrays;
 
 /**
  * A chessboard that can hold and rearrange chess pieces.
@@ -12,7 +11,7 @@ import javax.management.monitor.GaugeMonitor;
  */
 public class ChessBoard {
 
-    ArrayList<ChessPieceWithPosition> gamePieces = new ArrayList<ChessPieceWithPosition>();
+    private ArrayList<ChessPieceWithPosition> gamePieces = new ArrayList<ChessPieceWithPosition>();
 
     /*
      * Constructor for the class
@@ -99,7 +98,15 @@ public class ChessBoard {
      * position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        throw new RuntimeException("Not implemented");
+        for(ChessPieceWithPosition piece : gamePieces){
+            if(piece.getPosition() == position)
+                return piece.getPiece();
+        }
+        return null;
+    }
+
+    public ArrayList<ChessPieceWithPosition> getBoard(){
+        return gamePieces;
     }
 
     /**
@@ -110,5 +117,20 @@ public class ChessBoard {
         gamePieces.clear();
         setBlack();
         setWhite();
+    }
+
+    @Override
+    public boolean equals(Object obj){
+        if(this == obj)
+            return true;
+        if(obj == null || getClass() != obj.getClass())
+            return false;
+        ChessBoard check = (ChessBoard) obj;
+        return gamePieces.equals(check.getBoard());
+    }
+    
+    @Override
+    public int hashCode(){
+        return gamePieces.hashCode();
     }
 }
