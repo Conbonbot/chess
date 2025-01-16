@@ -59,21 +59,26 @@ public class ChessMove {
 
     @Override
     public boolean equals(Object obj){
-        if(this == obj)
+        if(this == obj){
             return true;
-        if(obj == null || getClass() != obj.getClass())
+        }
+        if(obj == null || getClass() != obj.getClass()){
             return false;
+        }
         ChessMove check = (ChessMove) obj;
         boolean check1 = this.startPosition.equals(check.getStartPosition());
         boolean check2 = this.endPosition.equals(check.getEndPosition());
         boolean check3;
         // Promotion -> one could be null, or both, or neither
-        if(this.promotionPiece != null && check.getPromotionPiece() != null)
+        if(this.promotionPiece != null && check.getPromotionPiece() != null){
             check3 = this.promotionPiece.equals(check.getPromotionPiece());
-        else if((this.promotionPiece == null && check.getPromotionPiece() != null) || (this.promotionPiece != null && check.getPromotionPiece() == null))
+        }
+        else if((this.promotionPiece == null && check.getPromotionPiece() != null) || (this.promotionPiece != null && check.getPromotionPiece() == null)){
             check3 = false;
-        else
+        }
+        else{
             check3 = true;
+        }
         return check1 && check2 && check3;
 
     }

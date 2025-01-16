@@ -40,10 +40,12 @@ public class ChessPieceWithPosition {
 
     @Override
     public boolean equals(Object obj){
-        if(this == obj)
+        if(this == obj){
             return true;
-        if(obj == null || getClass() != obj.getClass())
+        }
+        if(obj == null || getClass() != obj.getClass()){
             return false;
+        }
         ChessPieceWithPosition check = (ChessPieceWithPosition) obj;
         return this.piece.equals(check.getPiece()) && this.position.equals(check.getPosition());
     }

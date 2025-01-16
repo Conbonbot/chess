@@ -96,8 +96,9 @@ public class ChessBoard {
      */
     public ChessPiece getPiece(ChessPosition position) {
         for(ChessPieceWithPosition piece : gamePieces){
-            if(piece.getPosition().equals(position))
+            if(piece.getPosition().equals(position)){
                 return piece.getPiece();
+            }
         }
         return null;
     }
@@ -118,10 +119,12 @@ public class ChessBoard {
 
     @Override
     public boolean equals(Object obj){
-        if(this == obj)
+        if(this == obj){
             return true;
-        if(obj == null || getClass() != obj.getClass())
+        }
+        if(obj == null || getClass() != obj.getClass()){
             return false;
+        }
         ChessBoard check = (ChessBoard) obj;
         ArrayList<ChessPieceWithPosition> checkBoard = check.getBoard();
         // Check one way
