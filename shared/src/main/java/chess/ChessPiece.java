@@ -98,57 +98,7 @@ public class ChessPiece {
                 break;
             case PieceType.QUEEN:
                 // Rook moves
-                for(int i = col-1; i > 0; i--){
-                    if(board.getPiece(new ChessPosition(row, i)) == null){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(row, i)));
-                    }
-                    else if(board.getPiece(new ChessPosition(row, i)).getTeamColor() != currentpieceColor){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(row, i)));
-                        break;
-                    }
-                    else{
-                        break;
-                    }
-                }
-                // right
-                for(int i = col+1; i <= 8; i++){
-                    if(board.getPiece(new ChessPosition(row, i)) == null){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(row, i)));
-                    }
-                    else if(board.getPiece(new ChessPosition(row, i)).getTeamColor() != currentpieceColor){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(row, i)));
-                        break;
-                    }
-                    else{
-                        break;
-                    }
-                }
-                // up
-                for(int i = row+1; i <= 8; i++){
-                    if(board.getPiece(new ChessPosition(i, col)) == null){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(i, col)));
-                    }
-                    else if(board.getPiece(new ChessPosition(i, col)).getTeamColor() != currentpieceColor){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(i, col)));
-                        break;
-                    }
-                    else{
-                        break;
-                    }
-                }
-                // down
-                for(int i = row-1; i > 0; i--){
-                    if(board.getPiece(new ChessPosition(i, col)) == null){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(i, col)));
-                    }
-                    else if(board.getPiece(new ChessPosition(i, col)).getTeamColor() != currentpieceColor){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(i, col)));
-                        break;
-                    }
-                    else{
-                        break;
-                    }
-                }
+                moves.addAll(straightMovement(board, myPosition, row, col, currentpieceColor));
                 // Bishop Moves
                 moves.addAll(diagonalMovement(board, myPosition, row, col, currentpieceColor));
                 break;
@@ -190,60 +140,7 @@ public class ChessPiece {
                 }
                 break;
             case PieceType.ROOK:
-                // Move in straight lines
-                // Only 4 options: left, right, up down
-                // left
-                for(int i = col-1; i > 0; i--){
-                    if(board.getPiece(new ChessPosition(row, i)) == null){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(row, i)));
-                    }
-                    else if(board.getPiece(new ChessPosition(row, i)).getTeamColor() != currentpieceColor){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(row, i)));
-                        break;
-                    }
-                    else{
-                        break;
-                    }
-                }
-                // right
-                for(int i = col+1; i <= 8; i++){
-                    if(board.getPiece(new ChessPosition(row, i)) == null){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(row, i)));
-                    }
-                    else if(board.getPiece(new ChessPosition(row, i)).getTeamColor() != currentpieceColor){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(row, i)));
-                        break;
-                    }
-                    else{
-                        break;
-                    }
-                }
-                // up
-                for(int i = row+1; i <= 8; i++){
-                    if(board.getPiece(new ChessPosition(i, col)) == null){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(i, col)));
-                    }
-                    else if(board.getPiece(new ChessPosition(i, col)).getTeamColor() != currentpieceColor){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(i, col)));
-                        break;
-                    }
-                    else{
-                        break;
-                    }
-                }
-                // down
-                for(int i = row-1; i > 0; i--){
-                    if(board.getPiece(new ChessPosition(i, col)) == null){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(i, col)));
-                    }
-                    else if(board.getPiece(new ChessPosition(i, col)).getTeamColor() != currentpieceColor){
-                        moves.add(new ChessMove(myPosition, new ChessPosition(i, col)));
-                        break;
-                    }
-                    else{
-                        break;
-                    }
-                }
+                moves.addAll(straightMovement(board, myPosition, row, col, currentpieceColor));
                 break;
             case PieceType.PAWN:
                 // Normally move 1 square forward, if it is the first time then 2.
@@ -388,7 +285,64 @@ public class ChessPiece {
         return moves;
     }
 
-
+    private Collection<ChessMove> straightMovement(ChessBoard board, ChessPosition myPosition, int row, int col, ChessGame.TeamColor currentpieceColor){
+        Collection<ChessMove> moves = new ArrayList<>();
+        // Move in straight lines
+        // Only 4 options: left, right, up down
+        // left
+        for(int i = col-1; i > 0; i--){
+            if(board.getPiece(new ChessPosition(row, i)) == null){
+                moves.add(new ChessMove(myPosition, new ChessPosition(row, i)));
+            }
+            else if(board.getPiece(new ChessPosition(row, i)).getTeamColor() != currentpieceColor){
+                moves.add(new ChessMove(myPosition, new ChessPosition(row, i)));
+                break;
+            }
+            else{
+                break;
+            }
+        }
+        // right
+        for(int i = col+1; i <= 8; i++){
+            if(board.getPiece(new ChessPosition(row, i)) == null){
+                moves.add(new ChessMove(myPosition, new ChessPosition(row, i)));
+            }
+            else if(board.getPiece(new ChessPosition(row, i)).getTeamColor() != currentpieceColor){
+                moves.add(new ChessMove(myPosition, new ChessPosition(row, i)));
+                break;
+            }
+            else{
+                break;
+            }
+        }
+        // up
+        for(int i = row+1; i <= 8; i++){
+            if(board.getPiece(new ChessPosition(i, col)) == null){
+                moves.add(new ChessMove(myPosition, new ChessPosition(i, col)));
+            }
+            else if(board.getPiece(new ChessPosition(i, col)).getTeamColor() != currentpieceColor){
+                moves.add(new ChessMove(myPosition, new ChessPosition(i, col)));
+                break;
+            }
+            else{
+                break;
+            }
+        }
+        // down
+        for(int i = row-1; i > 0; i--){
+            if(board.getPiece(new ChessPosition(i, col)) == null){
+                moves.add(new ChessMove(myPosition, new ChessPosition(i, col)));
+            }
+            else if(board.getPiece(new ChessPosition(i, col)).getTeamColor() != currentpieceColor){
+                moves.add(new ChessMove(myPosition, new ChessPosition(i, col)));
+                break;
+            }
+            else{
+                break;
+            }
+        }
+        return moves;
+    }
 
     @Override
     public boolean equals(Object obj){
