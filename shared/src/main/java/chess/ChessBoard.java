@@ -96,7 +96,7 @@ public class ChessBoard {
      */
     public ChessPiece getPiece(ChessPosition position) {
         for(ChessPieceWithPosition piece : gamePieces){
-            if(piece.getPosition() == position)
+            if(piece.getPosition().equals(position))
                 return piece.getPiece();
         }
         return null;
@@ -147,7 +147,6 @@ public class ChessBoard {
         return gamePieces.hashCode();
     }
 
-    // TODO: Remove
     private static final Map<ChessPiece.PieceType, Character> CHAR_TO_TYPE_MAP = Map.of(
         ChessPiece.PieceType.PAWN, 'p',
         ChessPiece.PieceType.KNIGHT, 'n',
@@ -159,7 +158,7 @@ public class ChessBoard {
     @Override
     public String toString(){
         String str = "";
-        for(int i = 1; i < 9; i++){
+        for(int i = 8; i > 0; i--){
             for(int j = 1; j < 9; j++){
                 boolean found = false;
                 for(ChessPieceWithPosition piece : this.gamePieces){
@@ -167,9 +166,9 @@ public class ChessBoard {
                     if(pos.getRow() == i && pos.getColumn() == j){
                         str += "|";
                         if(piece.getPiece().getTeamColor() == ChessGame.TeamColor.WHITE)
-                            str += CHAR_TO_TYPE_MAP.get(piece.getPiece().getPieceType());
-                        else
                             str += CHAR_TO_TYPE_MAP.get(piece.getPiece().getPieceType()).toString().toUpperCase();
+                        else
+                            str += CHAR_TO_TYPE_MAP.get(piece.getPiece().getPieceType());
                         found = true;
                         break;
                     }

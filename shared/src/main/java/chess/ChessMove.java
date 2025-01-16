@@ -23,6 +23,16 @@ public class ChessMove {
         this.promotionPiece = promotionPiece;
     }
 
+    /*
+     * Overloaded constructor for non-pawn pieces (promotion is null)
+     */
+    public ChessMove(ChessPosition startPosition, ChessPosition endPosition) {
+        this.startPosition = startPosition;
+        this.endPosition = endPosition;
+        this.promotionPiece = null;
+    }
+
+    
     /**
      * @return ChessPosition of starting location
      */
@@ -54,12 +64,28 @@ public class ChessMove {
         if(obj == null || getClass() != obj.getClass())
             return false;
         ChessMove check = (ChessMove) obj;
-        return this.startPosition == check.getStartPosition() && this.endPosition == check.getEndPosition();
+        boolean check1 = this.startPosition.equals(check.getStartPosition());
+        boolean check2 = this.endPosition.equals(check.getEndPosition());
+        boolean check3;
+        // Promotion -> one could be null, or both, or neither
+        if(this.promotionPiece != null && check.getPromotionPiece() != null)
+            check3 = this.promotionPiece.equals(check.getPromotionPiece());
+        else if((this.promotionPiece == null && check.getPromotionPiece() != null) || (this.promotionPiece != null && check.getPromotionPiece() == null))
+            check3 = false;
+        else
+            check3 = true;
+        return check1 && check2 && check3;
+
     }
 
     @Override
     public int hashCode(){
         return Objects.hash(this.startPosition, this.endPosition, this.promotionPiece);
+    }
+
+    @Override
+    public String toString(){
+        return "Start: " + startPosition + " | End: " + endPosition + "\n";
     }
 
     
