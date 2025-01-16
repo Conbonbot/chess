@@ -259,7 +259,6 @@ public class ChessPiece {
                 }
                 break;
             case PieceType.KNIGHT:
-                // TODO: Knight moves
                 // up 2, left 1
                 if(row < 7 && col > 1 && (board.getPiece(new ChessPosition(row+2, col-1)) == null || board.getPiece(new ChessPosition(row+2, col-1)).getTeamColor() != currentpieceColor)){
                     moves.add(new ChessMove(myPosition, new ChessPosition(row+2, col-1)));

@@ -168,16 +168,19 @@ public class ChessBoard {
                     ChessPosition pos = piece.getPosition();
                     if(pos.getRow() == i && pos.getColumn() == j){
                         str += "|";
-                        if(piece.getPiece().getTeamColor() == ChessGame.TeamColor.WHITE)
+                        if(piece.getPiece().getTeamColor() == ChessGame.TeamColor.WHITE){
                             str += CHAR_TO_TYPE_MAP.get(piece.getPiece().getPieceType()).toString().toUpperCase();
-                        else
+                        }
+                        else{
                             str += CHAR_TO_TYPE_MAP.get(piece.getPiece().getPieceType());
+                        }
                         found = true;
                         break;
                     }
                 }
-                if(!found)
+                if(!found){
                     str += "| ";
+                }
             }
             str += "|\n";
         }
