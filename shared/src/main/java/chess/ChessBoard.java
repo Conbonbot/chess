@@ -1,7 +1,7 @@
 package chess;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Map;
 
 /**
  * A chessboard that can hold and rearrange chess pieces.
@@ -11,21 +11,18 @@ import java.util.Arrays;
  */
 public class ChessBoard {
 
-    private ArrayList<ChessPieceWithPosition> gamePieces = new ArrayList<ChessPieceWithPosition>();
+    private final ArrayList<ChessPieceWithPosition> gamePieces = new ArrayList<>();
 
     /*
      * Constructor for the class
-     * Uses setWhite and setBlack to assemble the board
      */
     public ChessBoard() {
-        setWhite();
-        setBlack();
     }
 
     /*
      * An array holding the relative locations of the special pieces
      */
-    private ChessPiece.PieceType[] specialPiecesOrder = {
+    private final ChessPiece.PieceType[] specialPiecesOrder = {
         ChessPiece.PieceType.ROOK,
         ChessPiece.PieceType.KNIGHT,
         ChessPiece.PieceType.BISHOP,
@@ -39,7 +36,7 @@ public class ChessBoard {
     /*
      * Creates all white pieces, and adds them to game_pieces
      */
-    public void setWhite(){
+    private void setWhite(){
         int col = 1;
         // Set special pieces (row = 1)
         for(ChessPiece.PieceType specialPiece : specialPiecesOrder){
@@ -61,13 +58,13 @@ public class ChessBoard {
     /*
      * Creates all black pieces, and adds them to game_pieces
      */
-    public void setBlack(){
+    private void setBlack(){
         int col = 1;
         // Set special pieces (row = 7)
         for(ChessPiece.PieceType specialPiece : specialPiecesOrder){
             gamePieces.add(new ChessPieceWithPosition(
                 new ChessPiece(ChessGame.TeamColor.BLACK, specialPiece), 
-                new ChessPosition(7, col++)
+                new ChessPosition(8, col++)
             ));
         }
         // Set pawns (row = 8)
@@ -75,7 +72,7 @@ public class ChessBoard {
         for(int i = 0; i < 8; i++){
             gamePieces.add(new ChessPieceWithPosition(
                 new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN), 
-                new ChessPosition(8, col++)
+                new ChessPosition(7, col++)
             ));
         }
     }
@@ -106,7 +103,7 @@ public class ChessBoard {
     }
 
     public ArrayList<ChessPieceWithPosition> getBoard(){
-        return gamePieces;
+        return this.gamePieces;
     }
 
     /**
@@ -126,11 +123,62 @@ public class ChessBoard {
         if(obj == null || getClass() != obj.getClass())
             return false;
         ChessBoard check = (ChessBoard) obj;
-        return gamePieces.equals(check.getBoard());
+        ArrayList<ChessPieceWithPosition> checkBoard = check.getBoard();
+        // Check one way
+        boolean equal = false;
+        for(ChessPieceWithPosition gamePiece : this.gamePieces){
+            equal = false;
+            for(ChessPieceWithPosition checkPiece : checkBoard){
+                if(gamePiece.equals(checkPiece)){
+                    equal = true;
+                    break;
+                }
+            }
+            if(!equal){
+                break;
+            }
+        }
+        return equal;
+    
     }
     
     @Override
     public int hashCode(){
         return gamePieces.hashCode();
+    }
+
+    // TODO: Remove
+    private static final Map<ChessPiece.PieceType, Character> CHAR_TO_TYPE_MAP = Map.of(
+        ChessPiece.PieceType.PAWN, 'p',
+        ChessPiece.PieceType.KNIGHT, 'n',
+        ChessPiece.PieceType.ROOK,'r', 
+        ChessPiece.PieceType.QUEEN,'q',
+        ChessPiece.PieceType.KING, 'k', 
+        ChessPiece.PieceType.BISHOP, 'b');
+
+    @Override
+    public String toString(){
+        String str = "";
+        for(int i = 1; i < 9; i++){
+            for(int j = 1; j < 9; j++){
+                boolean found = false;
+                for(ChessPieceWithPosition piece : this.gamePieces){
+                    ChessPosition pos = piece.getPosition();
+                    if(pos.getRow() == i && pos.getColumn() == j){
+                        str += "|";
+                        if(piece.getPiece().getTeamColor() == ChessGame.TeamColor.WHITE)
+                            str += CHAR_TO_TYPE_MAP.get(piece.getPiece().getPieceType());
+                        else
+                            str += CHAR_TO_TYPE_MAP.get(piece.getPiece().getPieceType()).toString().toUpperCase();
+                        found = true;
+                        break;
+                    }
+                }
+                if(!found)
+                    str += "| ";
+            }
+            str += "|\n";
+        }
+        return str;
     }
 }

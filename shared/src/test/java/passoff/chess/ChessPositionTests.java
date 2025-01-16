@@ -1,13 +1,14 @@
 package passoff.chess;
 
-import chess.ChessPosition;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashSet;
-import java.util.Set;
+import chess.ChessPosition;
 
 public class ChessPositionTests {
     private ChessPosition original;
