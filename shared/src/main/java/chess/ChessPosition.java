@@ -10,8 +10,8 @@ import java.util.Objects;
  */
 public class ChessPosition {
 
-    // Global variables for current row and col position of piece
-    private int row, col;
+    int row;
+    int col;
 
     public ChessPosition(int row, int col) {
         this.row = row;
@@ -26,14 +26,6 @@ public class ChessPosition {
         return row;
     }
 
-    /*
-     * Sets the row of a given piece
-     * @param row The row to set (1-8)
-     */
-    public void setRow(int row){
-        this.row = row;
-    }
-
     /**
      * @return which column this position is in
      * 1 codes for the left row
@@ -42,38 +34,25 @@ public class ChessPosition {
         return col;
     }
 
-    /*
-     * Sets the column of a piece
-     * @param col The column to set (1-8)
-     */
-    public void setCol(int col){
-        this.col = col;
-    }
-
-    /*
-     * Overriden equals 
-     */
     @Override
-    public boolean equals(Object obj){
-        if(this == obj){
-            return true;
-        }
-        if(obj == null || getClass() != obj.getClass()){
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        ChessPosition check = (ChessPosition) obj;
-        return this.row == check.getRow() && this.col == check.getColumn();
+        ChessPosition that = (ChessPosition) o;
+        return row == that.row && col == that.col;
     }
 
     @Override
-    public int hashCode(){
+    public int hashCode() {
         return Objects.hash(row, col);
     }
 
     @Override
-    public String toString(){
-        return "Row: " + row + " | Col: " + col;
+    public String toString() {
+        return "ChessPosition{" +
+                "row=" + row +
+                ", col=" + col +
+                '}';
     }
-
-    
 }
