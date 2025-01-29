@@ -110,6 +110,7 @@ public class ChessBoard {
     public String toString() {
         String str = "";
         for(int i = 0; i < 8; i++) {
+            str += "|";
             for(int j = 0; j < 8; j++) {
                 if(board[i][j] != null) {
                     str += board[i][j].toString();

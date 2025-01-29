@@ -37,48 +37,21 @@ public class ChessPiece {
     @Override
     public String toString() {
         String str = "";
-        if(pieceColor == ChessGame.TeamColor.BLACK) {
-            if(type == ChessPiece.PieceType.PAWN){
-                str = "p";
-            }
-            else if(type == ChessPiece.PieceType.KNIGHT){
-                str = "n";
-            }
-            else if(type == ChessPiece.PieceType.BISHOP){
-                str = "b";
-            }
-            else if(type == ChessPiece.PieceType.ROOK){
-                str = "r";
-            }
-            else if(type == ChessPiece.PieceType.QUEEN){
-                str = "q";
-            }
-            else if(type == ChessPiece.PieceType.KING){
-                str = "k";
-            }
+        if(type != null){
+            str = switch (type) {
+                case PAWN -> "p";
+                case KNIGHT -> "n";
+                case BISHOP -> "b";
+                case ROOK -> "r";
+                case QUEEN -> "q";
+                case KING -> "k";
+            };
         }
-        else{
-            if(type == ChessPiece.PieceType.PAWN){
-                str = "P";
-            }
-            else if(type == ChessPiece.PieceType.KNIGHT){
-                str = "N";
-            }
-            else if(type == ChessPiece.PieceType.BISHOP){
-                str = "B";
-            }
-            else if(type == ChessPiece.PieceType.ROOK){
-                str = "R";
-            }
-            else if(type == ChessPiece.PieceType.QUEEN){
-                str = "Q";
-            }
-            else if(type == ChessPiece.PieceType.KING){
-                str = "K";
-            }
-
+        if(pieceColor == ChessGame.TeamColor.BLACK) {
+            return str.toUpperCase();
         }
         return str;
+        
     }
 
     /**
