@@ -1,13 +1,12 @@
 
-import chess.ChessBoard;
+import chess.ChessGame;
 
 public class Main {
 
 
     public static void main(String[] args) {
-        var board = new ChessBoard();
-        board.resetBoard();
+        var game = new ChessGame();
 
-        System.out.println(board);
+        System.out.println(game);
     }
 }

@@ -12,8 +12,8 @@ import java.util.Objects;
  */
 public class ChessPiece {
 
-    ChessGame.TeamColor pieceColor;
-    ChessPiece.PieceType type;
+    private final ChessGame.TeamColor pieceColor;
+    private final ChessPiece.PieceType type;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.pieceColor = pieceColor;
@@ -100,7 +100,7 @@ public class ChessPiece {
             if(i > 0){
                 // left
                 if(j > 0) {
-                    piece = board.getPiecebyIndex(i - 1, j - 1);
+                    piece = board.getPiecebyIndex(i-1, j-1);
                     if (piece == null || piece.getTeamColor() != currentTeamColor) {
                         ChessPosition endPosition = new ChessPosition(arrayToRow(i-1), arrayToCol(j-1));
                         ChessMove move = new ChessMove(myPosition, endPosition);
@@ -116,7 +116,7 @@ public class ChessPiece {
                 }
                 // right
                 if(j < 7) {
-                    piece = board.getPiecebyIndex(i - 1, j + 1);
+                    piece = board.getPiecebyIndex(i-1, j+1);
                     if (piece == null || piece.getTeamColor() != currentTeamColor) {
                         ChessPosition endPosition = new ChessPosition(arrayToRow(i-1), arrayToCol(j+1));
                         ChessMove move = new ChessMove(myPosition, endPosition);
@@ -128,7 +128,7 @@ public class ChessPiece {
             if(i < 7){
                 // left
                 if(j > 0) {
-                    piece = board.getPiecebyIndex(i + 1, j - 1);
+                    piece = board.getPiecebyIndex(i+1, j-1);
                     if (piece == null || piece.getTeamColor() != currentTeamColor) {
                         ChessPosition endPosition = new ChessPosition(arrayToRow(i+1), arrayToCol(j-1));
                         ChessMove move = new ChessMove(myPosition, endPosition);
@@ -144,7 +144,7 @@ public class ChessPiece {
                 }
                 // right
                 if(j < 7) {
-                    piece = board.getPiecebyIndex(i + 1, j + 1);
+                    piece = board.getPiecebyIndex(i+1, j+1);
                     if (piece == null || piece.getTeamColor() != currentTeamColor) {
                         ChessPosition endPosition = new ChessPosition(arrayToRow(i+1), arrayToCol(j+1));
                         ChessMove move = new ChessMove(myPosition, endPosition);

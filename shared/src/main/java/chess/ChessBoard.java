@@ -11,7 +11,7 @@ import java.util.Objects;
  */
 public class ChessBoard {
 
-    ChessPiece[][] board;
+    private final ChessPiece[][] board;
 
     public ChessBoard() {
         board = new ChessPiece[8][8];
@@ -40,6 +40,23 @@ public class ChessBoard {
 
     public ChessPiece getPiecebyIndex(int i, int j){
         return board[i][j];
+    }
+
+
+    /**
+     * Moves a chess piece on the chessboard
+     * 
+     * @param move the move to take
+     */
+    // TODO: Implement for pawn promotion
+    public void movePiece(ChessMove move){
+        int i_orig = rowToArray(move.getStartPosition().getRow());
+        int j_orig = colToArray(move.getStartPosition().getColumn());
+        int i_fini = rowToArray(move.getEndPosition().getRow());
+        int j_fini = colToArray(move.getEndPosition().getColumn());
+
+        board[i_orig][j_orig] = board[i_fini][j_fini];
+        board[i_orig][j_orig] = null;
     }
 
     /**

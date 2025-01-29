@@ -1,8 +1,7 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
-
-import chess.ChessGame.TeamColor;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -54,7 +53,25 @@ public class ChessGame {
      */
     // TODO: Implement
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        throw new RuntimeException("Not implemented");
+        ChessPiece piece = board.getPiece(startPosition);
+        Collection<ChessMove> possibleMoves = piece.pieceMoves(board, startPosition);
+        ArrayList<ChessMove> legalMoves = new ArrayList<>();
+        for(ChessMove possibleMove : possibleMoves){
+            if(legal(possibleMove)){
+                legalMoves.add(possibleMove);
+            }
+        }
+        return legalMoves;
+    }
+
+    /**
+     * 
+     * @param move chess move to check validity
+     * @return boolean if move is legal (doesn't cause danger of check)
+     */
+    // TODO: Implement
+    public boolean legal(ChessMove move){
+        return true;
     }
 
     /**
@@ -65,7 +82,14 @@ public class ChessGame {
      */
     // TODO: Implement
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        throw new RuntimeException("Not implemented");
+        Collection<ChessMove> legalMoves = validMoves(move.getStartPosition());
+        for(ChessMove legalMove : legalMoves){
+            if(legalMove == move){
+                board.movePiece(move);
+                return;
+            }
+        }
+        throw new InvalidMoveException("Move is invalid.");
     }
 
     /**
@@ -118,5 +142,14 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return board;
+    }
+
+    @Override
+    public String toString(){
+        String str = "";
+        str += board.toString();
+        str += "Current Color: ";
+        str += currentTeamColor + "\n";
+        return str;
     }
 }
