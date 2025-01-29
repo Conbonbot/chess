@@ -1,7 +1,10 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
+
+import chess.ChessPiece.PieceType;
 
 /**
  * A chessboard that can hold and rearrange chess pieces.
@@ -38,10 +41,15 @@ public class ChessBoard {
         return board[rowToArray(position.getRow())][colToArray(position.getColumn())];
     }
 
+    /**
+     * 
+     * @param i row index (array indexing)
+     * @param j col index (array indexing)
+     * @return
+     */
     public ChessPiece getPiecebyIndex(int i, int j){
         return board[i][j];
     }
-
 
     /**
      * Moves a chess piece on the chessboard
@@ -57,6 +65,40 @@ public class ChessBoard {
 
         board[i_orig][j_orig] = board[i_fini][j_fini];
         board[i_orig][j_orig] = null;
+    }
+
+    /**
+     * 
+     * @param teamColor color to check for
+     * @return locations of team's chess pieces
+     */
+    public ArrayList<ChessPosition> getTeamPositions(ChessGame.TeamColor teamColor){
+        ArrayList<ChessPosition> teamPositions = new ArrayList<>();
+        for(int i = 0; i < 8; i++){     
+            for(int j = 0; j < 8; j++){
+                if(board[i][j] != null && board[i][j].getTeamColor() == teamColor){
+                    teamPositions.add(new ChessPosition(arrayToRow(i), arrayToCol(j)));
+                }
+            }
+        }
+        return teamPositions;
+    }
+
+    /**
+     * 
+     * @param teamColor team color to find king of
+     * @return position (row,col) of king
+     */
+    public ChessPosition getKingLocation(ChessGame.TeamColor teamColor){
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                ChessPiece piece = board[i][j];
+                if(piece != null && piece.getPieceType() == PieceType.KING && piece.getTeamColor() != teamColor){
+                    return new ChessPosition(arrayToRow(i), arrayToCol(j));
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -93,21 +135,22 @@ public class ChessBoard {
         board[7][7] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.ROOK);
     }
 
-    public int rowToArray(int row){
+    private int rowToArray(int row){
         return 8-row;
     }
 
-    public int arrayToRow(int i){
+    private int arrayToRow(int i){
         return 8-i;
     }
 
-    public int colToArray(int col){
+    private int colToArray(int col){
         return col-1;
     }
 
-    public int arrayToCol(int j){
+    private int arrayToCol(int j){
         return j+1;
     }
+
 
     @Override
     public boolean equals(Object o) {

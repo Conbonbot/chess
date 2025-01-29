@@ -3,6 +3,8 @@ package chess;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import chess.ChessGame.TeamColor;
+
 /**
  * For a class that can manage a chess game, making moves on a board
  * <p>
@@ -80,7 +82,6 @@ public class ChessGame {
      * @param move chess move to preform
      * @throws InvalidMoveException if move is invalid
      */
-    // TODO: Implement
     public void makeMove(ChessMove move) throws InvalidMoveException {
         Collection<ChessMove> legalMoves = validMoves(move.getStartPosition());
         for(ChessMove legalMove : legalMoves){
@@ -98,9 +99,19 @@ public class ChessGame {
      * @param teamColor which team to check for check
      * @return True if the specified team is in check
      */
-    // TODO: Implement
     public boolean isInCheck(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        // Go through the team color
+        // If any valid move can take the king, check
+        ArrayList<ChessPosition> oppoTeamPositions = board.getTeamPositions(teamColor == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE);
+        ChessPosition kingPosition = board.getKingLocation(teamColor);
+        for(ChessPosition oppoPiece : oppoTeamPositions){
+            for(ChessMove validOppoPieceMove : validMoves(oppoPiece)){
+                if(validOppoPieceMove.getEndPosition() == kingPosition){
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
