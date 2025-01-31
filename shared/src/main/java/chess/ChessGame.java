@@ -3,6 +3,8 @@ package chess;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import chess.ChessGame.TeamColor;
+
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -35,6 +37,11 @@ public class ChessGame {
      */
     public void setTeamTurn(TeamColor team) {
         currentTeamColor = team;
+    }
+
+    
+    public void changeTeamTurn(){
+        currentTeamColor = (currentTeamColor == TeamColor.BLACK) ? TeamColor.WHITE : TeamColor.BLACK;
     }
 
     /**
@@ -81,8 +88,8 @@ public class ChessGame {
         ChessPosition startPosition = move.getStartPosition();
         ChessPosition endPosition = move.getEndPosition();
         // Make move
-        cBoard[rowToArray(startPosition.getRow())][colToArray(startPosition.getColumn())] = 
-            cBoard[rowToArray(endPosition.getRow())][colToArray(endPosition.getColumn())];
+        cBoard[rowToArray(endPosition.getRow())][colToArray(endPosition.getColumn())] = 
+            cBoard[rowToArray(startPosition.getRow())][colToArray(startPosition.getColumn())];
         cBoard[rowToArray(startPosition.getRow())][colToArray(startPosition.getColumn())] = null;
         ChessBoard copyBoard = new ChessBoard();
         copyBoard.setBoard(cBoard);
@@ -94,7 +101,7 @@ public class ChessGame {
                     // Check if other piece could take king
                     ChessPiece otherPiece = cBoard[i][j];
                     for(ChessMove otherMove : otherPiece.pieceMoves(copyBoard, new ChessPosition(arrayToRow(i), arrayToCol(j)))){
-                        if(otherMove.getEndPosition() == kingPosition){
+                        if(otherMove.getEndPosition().equals(kingPosition)){
                             return false;
                         }
                     }
@@ -129,11 +136,19 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        Collection<ChessMove> legalMoves = validMoves(move.getStartPosition());
-        for(ChessMove legalMove : legalMoves){
-            if(legalMove == move){
-                board.movePiece(move);
-                return;
+        ChessPosition pos = move.getStartPosition();
+        ChessPiece piece = board.getPiece(pos);
+        if(piece != null && piece.getTeamColor() == currentTeamColor){
+            Collection<ChessMove> legalMoves = validMoves(move.getStartPosition());
+            if(legalMoves == null){
+                throw new InvalidMoveException("No valid moves.");
+            }
+            for(ChessMove legalMove : legalMoves){
+                if(legalMove.equals(move)){
+                    board.movePiece(move);
+                    changeTeamTurn();
+                    return;
+                }
             }
         }
         throw new InvalidMoveException("Move is invalid.");

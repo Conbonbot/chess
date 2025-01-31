@@ -66,14 +66,23 @@ public class ChessBoard {
      * 
      * @param move the move to take
      */
-    // TODO: Implement for pawn promotion
+    // TODO: Implement pawn promotion
     public void movePiece(ChessMove move){
+
+        ChessPiece piece = getPiece(move.getStartPosition());
+        ChessGame.TeamColor teamColor = piece.getTeamColor();
+
         int i_orig = rowToArray(move.getStartPosition().getRow());
         int j_orig = colToArray(move.getStartPosition().getColumn());
         int i_fini = rowToArray(move.getEndPosition().getRow());
         int j_fini = colToArray(move.getEndPosition().getColumn());
 
-        board[i_orig][j_orig] = board[i_fini][j_fini];
+        if(move.getPromotionPiece() != null){
+            board[i_fini][j_fini] = new ChessPiece(teamColor, move.getPromotionPiece());
+        }
+        else{
+            board[i_fini][j_fini] =  board[i_orig][j_orig];
+        }
         board[i_orig][j_orig] = null;
     }
 
@@ -103,7 +112,7 @@ public class ChessBoard {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 ChessPiece piece = board[i][j];
-                if(piece != null && piece.getPieceType() == PieceType.KING && piece.getTeamColor() != teamColor){
+                if(piece != null && piece.getPieceType() == PieceType.KING && piece.getTeamColor() == teamColor){
                     return new ChessPosition(arrayToRow(i), arrayToCol(j));
                 }
             }
