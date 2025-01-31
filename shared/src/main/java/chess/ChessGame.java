@@ -69,9 +69,6 @@ public class ChessGame {
                 legalMoves.add(possibleMove);
             }
         }
-        if(legalMoves.isEmpty()){
-            return null;
-        }
         return legalMoves;
     }
 
@@ -91,6 +88,10 @@ public class ChessGame {
         cBoard[rowToArray(endPosition.getRow())][colToArray(endPosition.getColumn())] = 
             cBoard[rowToArray(startPosition.getRow())][colToArray(startPosition.getColumn())];
         cBoard[rowToArray(startPosition.getRow())][colToArray(startPosition.getColumn())] = null;
+        // Move king position as well
+        if(move.getStartPosition().equals(kingPosition)){
+            kingPosition = move.getEndPosition();
+        }
         ChessBoard copyBoard = new ChessBoard();
         copyBoard.setBoard(cBoard);
         // Find other pieces
@@ -140,7 +141,7 @@ public class ChessGame {
         ChessPiece piece = board.getPiece(pos);
         if(piece != null && piece.getTeamColor() == currentTeamColor){
             Collection<ChessMove> legalMoves = validMoves(move.getStartPosition());
-            if(legalMoves == null){
+            if(legalMoves.isEmpty()){
                 throw new InvalidMoveException("No valid moves.");
             }
             for(ChessMove legalMove : legalMoves){
