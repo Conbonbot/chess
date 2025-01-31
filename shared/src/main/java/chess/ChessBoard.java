@@ -14,7 +14,7 @@ import chess.ChessPiece.PieceType;
  */
 public class ChessBoard {
 
-    private final ChessPiece[][] board;
+    private ChessPiece[][] board;
 
     public ChessBoard() {
         board = new ChessPiece[8][8];
@@ -29,6 +29,16 @@ public class ChessBoard {
     public void addPiece(ChessPosition position, ChessPiece piece) {
         board[rowToArray(position.getRow())][colToArray(position.getColumn())] = piece;
     }
+
+    /**
+     * 
+     * @param board the board to set
+     * @return void
+     */
+    public void setBoard(ChessPiece[][] otherBoard){
+        this.board = otherBoard;
+    }
+
 
     /**
      * Gets a chess piece on the chessboard

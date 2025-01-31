@@ -54,12 +54,16 @@ public class ChessGame {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
+        TeamColor teamColor = piece.getTeamColor();
         Collection<ChessMove> possibleMoves = piece.pieceMoves(board, startPosition);
         ArrayList<ChessMove> legalMoves = new ArrayList<>();
         for(ChessMove possibleMove : possibleMoves){
-            if(legal(possibleMove)){
+            if(legal(possibleMove, teamColor)){
                 legalMoves.add(possibleMove);
             }
+        }
+        if(legalMoves.isEmpty()){
+            return null;
         }
         return legalMoves;
     }
@@ -69,12 +73,54 @@ public class ChessGame {
      * @param move chess move to check validity
      * @return boolean if move is legal (doesn't cause danger of check)
      */
-    // TODO: Implement
-    public boolean legal(ChessMove move){
-        // Check if move opens up king to danger
-
+    private boolean legal(ChessMove move, TeamColor teamColor){
+        // Set copied board to the end result of the move
+        // Check if any piece on the other team has the king as a move
+        ChessPosition kingPosition = board.getKingLocation(teamColor);
+        ChessPiece[][] cBoard = copyBoard();
+        ChessPosition startPosition = move.getStartPosition();
+        ChessPosition endPosition = move.getEndPosition();
+        // Make move
+        cBoard[rowToArray(startPosition.getRow())][colToArray(startPosition.getColumn())] = 
+            cBoard[rowToArray(endPosition.getRow())][colToArray(endPosition.getColumn())];
+        cBoard[rowToArray(startPosition.getRow())][colToArray(startPosition.getColumn())] = null;
+        ChessBoard copyBoard = new ChessBoard();
+        copyBoard.setBoard(cBoard);
+        // Find other pieces
+        for(int i = 0; i < 8; i++){
+            for(int j = 0; j < 8; j++){
+                // Check for other pieces
+                if(cBoard[i][j] != null && cBoard[i][j].getTeamColor() != teamColor){
+                    // Check if other piece could take king
+                    ChessPiece otherPiece = cBoard[i][j];
+                    for(ChessMove otherMove : otherPiece.pieceMoves(copyBoard, new ChessPosition(arrayToRow(i), arrayToCol(j)))){
+                        if(otherMove.getEndPosition() == kingPosition){
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
         return true;
     }
+
+    private ChessPiece[][] copyBoard(){
+        if(board == null){
+            return null;
+        }
+        ChessPiece[][] cBoard = new ChessPiece[8][8];
+        for(int i = 0; i < 8; i++){
+            for(int j = 0; j < 8; j++){
+                ChessPiece piece = board.getPiecebyIndex(i, j);
+                if(piece != null){
+                    cBoard[i][j] = new ChessPiece(piece.getTeamColor(), piece.getPieceType());
+                }
+            }
+        }
+        
+        return cBoard;
+    }
+
 
     /**
      * Makes a move in a chess game
@@ -170,5 +216,21 @@ public class ChessGame {
         str += "Current Color: ";
         str += currentTeamColor + "\n";
         return str;
+    }
+
+    private int rowToArray(int row){
+        return 8-row;
+    }
+
+    private int arrayToRow(int i){
+        return 8-i;
+    }
+
+    private int colToArray(int col){
+        return col-1;
+    }
+
+    private int arrayToCol(int j){
+        return j+1;
     }
 }
