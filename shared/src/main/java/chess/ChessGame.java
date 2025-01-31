@@ -3,8 +3,6 @@ package chess;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import chess.ChessGame.TeamColor;
-
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -85,9 +83,7 @@ public class ChessGame {
         ChessPosition startPosition = move.getStartPosition();
         ChessPosition endPosition = move.getEndPosition();
         // Make move
-        cBoard[rowToArray(endPosition.getRow())][colToArray(endPosition.getColumn())] = 
-            cBoard[rowToArray(startPosition.getRow())][colToArray(startPosition.getColumn())];
-        cBoard[rowToArray(startPosition.getRow())][colToArray(startPosition.getColumn())] = null;
+        fakeMove(cBoard, startPosition, endPosition);
         // Move king position as well
         if(move.getStartPosition().equals(kingPosition)){
             kingPosition = move.getEndPosition();
@@ -95,6 +91,18 @@ public class ChessGame {
         ChessBoard copyBoard = new ChessBoard();
         copyBoard.setBoard(cBoard);
         // Find other pieces
+        return teamTakeKing(copyBoard, cBoard, teamColor, kingPosition);
+    }
+
+    /**
+     * 
+     * @param copyBoard
+     * @param cBoard
+     * @param teamColor
+     * @param kingPosition
+     * @return If the other team can take the king
+     */
+    private boolean teamTakeKing(ChessBoard copyBoard, ChessPiece[][] cBoard, TeamColor teamColor, ChessPosition kingPosition){
         for(int i = 0; i < 8; i++){
             for(int j = 0; j < 8; j++){
                 // Check for other pieces
@@ -111,6 +119,7 @@ public class ChessGame {
         }
         return true;
     }
+
 
     private ChessPiece[][] copyBoard(){
         if(board == null){
@@ -129,6 +138,11 @@ public class ChessGame {
         return cBoard;
     }
 
+    private void fakeMove(ChessPiece[][] cBoard, ChessPosition startPosition, ChessPosition endPosition){
+        cBoard[rowToArray(endPosition.getRow())][colToArray(endPosition.getColumn())] = 
+            cBoard[rowToArray(startPosition.getRow())][colToArray(startPosition.getColumn())];
+        cBoard[rowToArray(startPosition.getRow())][colToArray(startPosition.getColumn())] = null;
+    }
 
     /**
      * Makes a move in a chess game
@@ -168,7 +182,7 @@ public class ChessGame {
         ChessPosition kingPosition = board.getKingLocation(teamColor);
         for(ChessPosition oppoPiece : oppoTeamPositions){
             for(ChessMove validOppoPieceMove : validMoves(oppoPiece)){
-                if(validOppoPieceMove.getEndPosition() == kingPosition){
+                if(validOppoPieceMove.getEndPosition().equals(kingPosition)){
                     return true;
                 }
             }
@@ -183,8 +197,37 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        ChessPosition kingPosition = board.getKingLocation(teamColor);
-        return isInCheck(teamColor) && validMoves(kingPosition).isEmpty();
+        // Check if any team piece can capture a piece to remove check
+        if(isInCheck(teamColor)){
+            ArrayList<ChessPosition> teamPositions = board.getTeamPositions(teamColor);
+            for(ChessPosition pos : teamPositions){
+                // Check if a valid move can remove the piece causing check
+                // Test if any valid move can remove check
+                for(ChessMove move : validMoves(pos)){
+                    // fake move
+                    // Check if oppo team's move hold king
+                    ChessPosition kingPosition = board.getKingLocation(teamColor);
+                    ChessPiece[][] cBoard = copyBoard();
+                    ChessPosition startPosition = move.getStartPosition();
+                    ChessPosition endPosition = move.getEndPosition();
+                    // Fake move
+                    fakeMove(cBoard, startPosition, endPosition);
+                    if(move.getStartPosition().equals(kingPosition)){
+                        kingPosition = move.getEndPosition();
+                    }
+                    ChessBoard copyBoard = new ChessBoard();
+                    copyBoard.setBoard(cBoard);
+                    // Check if other team holds king
+                    TeamColor other = (teamColor == TeamColor.BLACK) ? TeamColor.WHITE : TeamColor.BLACK;
+                    if(teamTakeKing(copyBoard, cBoard, other, kingPosition)){
+                        return false;
+                    }
+                }
+                return true;
+            }
+        //return isInCheck(teamColor) && validMoves(board.getKingLocation(teamColor)).isEmpty();
+        }
+        return false;
     }
 
     /**

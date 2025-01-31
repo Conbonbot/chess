@@ -1,9 +1,10 @@
 package passoff.chess.game;
 
-import chess.ChessGame;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import chess.ChessGame;
 import passoff.chess.TestUtilities;
 
 public class GameStatusTests {
