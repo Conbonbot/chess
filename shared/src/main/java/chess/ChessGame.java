@@ -3,7 +3,6 @@ package chess;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import chess.ChessGame.TeamColor;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -13,8 +12,8 @@ import chess.ChessGame.TeamColor;
  */
 public class ChessGame {
 
-    ChessBoard board;
-    TeamColor currentTeamColor;
+    private ChessBoard board;
+    private TeamColor currentTeamColor;
 
     public ChessGame() {
         board = new ChessBoard();
@@ -26,7 +25,7 @@ public class ChessGame {
      * @return Which team's turn it is
      */
     public TeamColor getTeamTurn() {
-        return currentTeamColor;
+        return currentTeamColor;   
     }
 
     /**
@@ -53,7 +52,6 @@ public class ChessGame {
      * @return Set of valid moves for requested piece, or null if no piece at
      * startPosition
      */
-    // TODO: Implement
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
         Collection<ChessMove> possibleMoves = piece.pieceMoves(board, startPosition);
@@ -73,6 +71,8 @@ public class ChessGame {
      */
     // TODO: Implement
     public boolean legal(ChessMove move){
+        // Check if move opens up king to danger
+
         return true;
     }
 
@@ -133,6 +133,9 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
+        if(isInCheck(teamColor)){
+            return false;
+        }
         ArrayList<ChessPosition> teamPositions = board.getTeamPositions(teamColor);
         for(ChessPosition piece : teamPositions){
             if(!validMoves(piece).isEmpty()){
