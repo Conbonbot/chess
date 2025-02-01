@@ -66,7 +66,6 @@ public class ChessBoard {
      * 
      * @param move the move to take
      */
-    // TODO: Implement pawn promotion
     public void movePiece(ChessMove move){
 
         ChessPiece piece = getPiece(move.getStartPosition());
