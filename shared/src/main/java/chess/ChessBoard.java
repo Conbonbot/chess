@@ -71,18 +71,18 @@ public class ChessBoard {
         ChessPiece piece = getPiece(move.getStartPosition());
         ChessGame.TeamColor teamColor = piece.getTeamColor();
 
-        int i_orig = rowToArray(move.getStartPosition().getRow());
-        int j_orig = colToArray(move.getStartPosition().getColumn());
-        int i_fini = rowToArray(move.getEndPosition().getRow());
-        int j_fini = colToArray(move.getEndPosition().getColumn());
+        int iOrig = rowToArray(move.getStartPosition().getRow());
+        int jOrig = colToArray(move.getStartPosition().getColumn());
+        int iFini = rowToArray(move.getEndPosition().getRow());
+        int jFini = colToArray(move.getEndPosition().getColumn());
 
         if(move.getPromotionPiece() != null){
-            board[i_fini][j_fini] = new ChessPiece(teamColor, move.getPromotionPiece());
+            board[iFini][jFini] = new ChessPiece(teamColor, move.getPromotionPiece());
         }
         else{
-            board[i_fini][j_fini] =  board[i_orig][j_orig];
+            board[iFini][jFini] =  board[iOrig][jOrig];
         }
-        board[i_orig][j_orig] = null;
+        board[iOrig][jOrig] = null;
     }
 
     /**

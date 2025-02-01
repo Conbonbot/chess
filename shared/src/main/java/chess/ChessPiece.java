@@ -22,11 +22,13 @@ public class ChessPiece {
     // Predicates to help shorten code
     // UL -> Up and Left check
     // DR -> Down and Right check
-    private final Predicate<Integer> UL = x -> (x > 0);
-    private final Predicate<Integer> DR = x -> (x < 7);
-    private final Predicate<Integer> nop = x -> (x != null);
-    private final Predicate<Integer> UL_move = x -> (x >= 0);
-    private final Predicate<Integer> DR_move = x -> (x < 8);
+    private final static Predicate<Integer> UL = x -> (x > 0);
+    private final static Predicate<Integer> DR = x -> (x < 7);
+    private final static Predicate<Integer> nop = x -> (x != null);
+    private final static Predicate<Integer> UL_move = x -> (x >= 0);
+    private final static Predicate<Integer> DR_move = x -> (x < 8);
+    private final static Predicate<Integer> UL_2 = x -> (x > 1); 
+    private final static Predicate<Integer> DR_2 = x -> (x < 6);
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.pieceColor = pieceColor;
@@ -83,7 +85,7 @@ public class ChessPiece {
      * 
      * Various enums used for code refactoring
      */
-    private enum directions{
+    private enum Directions{
         UP,
         DOWN,
         LEFT,
@@ -169,9 +171,7 @@ public class ChessPiece {
         ArrayList<ChessMove> knightMoves = new ArrayList<>();
         int i = rowToArray(myPosition.getRow());
         int j = colToArray(myPosition.getColumn());
-        Predicate<Integer> UL_2 = x -> (x > 1); 
-        Predicate<Integer> DR_2 = x -> (x < 6);
-         // up 2 (left/right 1)
+        // up 2 (left/right 1)
         knightMoves.add((UL_2.test(i) && UL.test(j)) ? addMove(board, myPosition, i-2, j-1) : null);
         knightMoves.add((UL_2.test(i) && DR.test(j)) ? addMove(board, myPosition, i-2, j+1) : null);
         // down 2 (left/right 1)
@@ -193,13 +193,21 @@ public class ChessPiece {
         ArrayList<ChessMove> nullList = new ArrayList<>();
         nullList.add(null);
         // up left
-        diagonalMoves.addAll((UL.test(i) && UL.test(j)) ? linearMovement(myPosition, board, i, j, directions.UP_LEFT, UL_move, UL_move) : nullList);
+        diagonalMoves.addAll((UL.test(i) && UL.test(j)) 
+            ? linearMovement(myPosition, board, i, j, Directions.UP_LEFT, UL_move, UL_move) 
+            : nullList);
         // up right
-        diagonalMoves.addAll((UL.test(i) && DR.test(j)) ? linearMovement(myPosition, board, i, j, directions.UP_RIGHT, UL_move, DR_move) : nullList);
+        diagonalMoves.addAll((UL.test(i) && DR.test(j)) 
+            ? linearMovement(myPosition, board, i, j, Directions.UP_RIGHT, UL_move, DR_move) 
+            : nullList);
         // down left
-        diagonalMoves.addAll((DR.test(i) && UL.test(j)) ? linearMovement(myPosition, board, i, j, directions.DOWN_LEFT, DR_move, UL_move) : nullList);
+        diagonalMoves.addAll((DR.test(i) && UL.test(j)) 
+            ? linearMovement(myPosition, board, i, j, Directions.DOWN_LEFT, DR_move, UL_move) 
+            : nullList);
         // down right
-        diagonalMoves.addAll((DR.test(i) && DR.test(j)) ? linearMovement(myPosition, board, i, j, directions.DOWN_RIGHT, DR_move, DR_move) : nullList);
+        diagonalMoves.addAll((DR.test(i) && DR.test(j)) 
+            ? linearMovement(myPosition, board, i, j, Directions.DOWN_RIGHT, DR_move, DR_move) 
+            : nullList);
         return diagonalMoves;
     }
 
@@ -210,23 +218,23 @@ public class ChessPiece {
         ArrayList<ChessMove> nullList = new ArrayList<>();
         nullList.add(null);
         // up
-        vertMoves.addAll((UL.test(i)) ? linearMovement(myPosition, board, i, j, directions.UP, UL_move, nop) : nullList);
+        vertMoves.addAll((UL.test(i)) ? linearMovement(myPosition, board, i, j, Directions.UP, UL_move, nop) : nullList);
         // down
-        vertMoves.addAll((DR.test(i)) ? linearMovement(myPosition, board, i, j, directions.DOWN, DR_move, nop) : nullList);
+        vertMoves.addAll((DR.test(i)) ? linearMovement(myPosition, board, i, j, Directions.DOWN, DR_move, nop) : nullList);
         // left
-        vertMoves.addAll((UL.test(j)) ? linearMovement(myPosition, board, i, j, directions.LEFT, nop, UL_move) : nullList);
+        vertMoves.addAll((UL.test(j)) ? linearMovement(myPosition, board, i, j, Directions.LEFT, nop, UL_move) : nullList);
         // right
-        vertMoves.addAll((DR.test(j)) ? linearMovement(myPosition, board, i, j, directions.RIGHT, nop, DR_move) : nullList);
+        vertMoves.addAll((DR.test(j)) ? linearMovement(myPosition, board, i, j, Directions.RIGHT, nop, DR_move) : nullList);
         return vertMoves;
     }
 
-    private ArrayList<ChessMove> linearMovement(ChessPosition myPosition, ChessBoard board, int i, int j, ChessPiece.directions dir, 
+    private ArrayList<ChessMove> linearMovement(ChessPosition myPosition, ChessBoard board, int i, int j, ChessPiece.Directions dir, 
         Predicate<Integer> cond1, Predicate<Integer> cond2){
 
         ArrayList<ChessMove> linearMoves =  new ArrayList<>();
         ChessPiece currentPiece = board.getPiece(myPosition);
         ChessGame.TeamColor currentTeamColor = currentPiece.getTeamColor();
-        int i_temp = switch(dir) {
+        int iTemp = switch(dir) {
             case UP -> i-1;
             case DOWN -> i+1;
             case DOWN_LEFT -> i+1;
@@ -236,7 +244,7 @@ public class ChessPiece {
             case UP_LEFT -> i-1;
             case UP_RIGHT -> i-1;
         };
-        int j_temp = switch(dir){
+        int jTemp = switch(dir){
             case UP -> j;
             case DOWN -> j;
             case DOWN_LEFT -> j-1;
@@ -249,26 +257,26 @@ public class ChessPiece {
 
 
         do{
-            ChessPiece piece = board.getPiecebyIndex(i_temp, j_temp);
+            ChessPiece piece = board.getPiecebyIndex(iTemp, jTemp);
             if(piece == null){
-                linearMoves.add(addMove(board, myPosition, i_temp, j_temp));
-                // update i_temp or j_temp
-                i_temp = (dir == directions.UP || dir == directions.UP_LEFT || dir == directions.UP_RIGHT) ? i_temp-1
-                       : (dir == directions.DOWN || dir == directions.DOWN_LEFT || dir == directions.DOWN_RIGHT) ? i_temp+1 
-                       : i_temp;
-                j_temp = (dir == directions.LEFT || dir == directions.UP_LEFT || dir == directions.DOWN_LEFT) ? j_temp-1
-                       : (dir == directions.RIGHT || dir == directions.UP_RIGHT || dir == directions.DOWN_RIGHT) ? j_temp+1 
-                       : j_temp;
+                linearMoves.add(addMove(board, myPosition, iTemp, jTemp));
+                // update iTemp or jTemp
+                iTemp = (dir == Directions.UP || dir == Directions.UP_LEFT || dir == Directions.UP_RIGHT) ? iTemp-1
+                       : (dir == Directions.DOWN || dir == Directions.DOWN_LEFT || dir == Directions.DOWN_RIGHT) ? iTemp+1 
+                       : iTemp;
+                jTemp = (dir == Directions.LEFT || dir == Directions.UP_LEFT || dir == Directions.DOWN_LEFT) ? jTemp-1
+                       : (dir == Directions.RIGHT || dir == Directions.UP_RIGHT || dir == Directions.DOWN_RIGHT) ? jTemp+1 
+                       : jTemp;
             }
             else if(piece.getTeamColor() != currentTeamColor){
-                linearMoves.add(addMove(board, myPosition, i_temp, j_temp));
+                linearMoves.add(addMove(board, myPosition, iTemp, jTemp));
                 break;
             }
             else{
                 break;
             }
         }
-        while(cond1.test(i_temp) && cond2.test(j_temp));
+        while(cond1.test(iTemp) && cond2.test(jTemp));
 
         return linearMoves;
     }
@@ -307,11 +315,11 @@ public class ChessPiece {
         return null;
     }
 
-    private ChessMove advancePawn(ChessBoard board, ChessPosition myPosition, int i_1, int i_2, int j){
-        ChessPiece piece = board.getPiecebyIndex(i_1, j);
-        ChessPiece piece2 = board.getPiecebyIndex(i_2,j);
+    private ChessMove advancePawn(ChessBoard board, ChessPosition myPosition, int i1, int i2, int j){
+        ChessPiece piece = board.getPiecebyIndex(i1, j);
+        ChessPiece piece2 = board.getPiecebyIndex(i2,j);
         if(piece == null && piece2 == null){
-            ChessPosition endPosition = new ChessPosition(arrayToRow(i_2), arrayToCol(j));
+            ChessPosition endPosition = new ChessPosition(arrayToRow(i2), arrayToCol(j));
             return new ChessMove(myPosition, endPosition);
         }
         return null;
