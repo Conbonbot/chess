@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 
+
 /**
  * For a class that can manage a chess game, making moves on a board
  * <p>
@@ -69,7 +70,6 @@ public class ChessGame {
         }
         return legalMoves;
     }
-
     /**
      * 
      * @param move chess move to check validity
@@ -225,7 +225,6 @@ public class ChessGame {
                 }
                 return true;
             }
-        //return isInCheck(teamColor) && validMoves(board.getKingLocation(teamColor)).isEmpty();
         }
         return false;
     }

@@ -24,9 +24,9 @@ public class ChessPiece {
     // DR -> Down and Right check
     private final static Predicate<Integer> UL = x -> (x > 0);
     private final static Predicate<Integer> DR = x -> (x < 7);
-    private final static Predicate<Integer> nop = x -> (x != null);
-    private final static Predicate<Integer> UL_move = x -> (x >= 0);
-    private final static Predicate<Integer> DR_move = x -> (x < 8);
+    private final static Predicate<Integer> NOP = x -> (x != null);
+    private final static Predicate<Integer> UL_MOVE = x -> (x >= 0);
+    private final static Predicate<Integer> DR_MOVE = x -> (x < 8);
     private final static Predicate<Integer> UL_2 = x -> (x > 1); 
     private final static Predicate<Integer> DR_2 = x -> (x < 6);
 
@@ -194,19 +194,19 @@ public class ChessPiece {
         nullList.add(null);
         // up left
         diagonalMoves.addAll((UL.test(i) && UL.test(j)) 
-            ? linearMovement(myPosition, board, i, j, Directions.UP_LEFT, UL_move, UL_move) 
+            ? linearMovement(myPosition, board, i, j, Directions.UP_LEFT, UL_MOVE, UL_MOVE) 
             : nullList);
         // up right
         diagonalMoves.addAll((UL.test(i) && DR.test(j)) 
-            ? linearMovement(myPosition, board, i, j, Directions.UP_RIGHT, UL_move, DR_move) 
+            ? linearMovement(myPosition, board, i, j, Directions.UP_RIGHT, UL_MOVE, DR_MOVE) 
             : nullList);
         // down left
         diagonalMoves.addAll((DR.test(i) && UL.test(j)) 
-            ? linearMovement(myPosition, board, i, j, Directions.DOWN_LEFT, DR_move, UL_move) 
+            ? linearMovement(myPosition, board, i, j, Directions.DOWN_LEFT, DR_MOVE, UL_MOVE) 
             : nullList);
         // down right
         diagonalMoves.addAll((DR.test(i) && DR.test(j)) 
-            ? linearMovement(myPosition, board, i, j, Directions.DOWN_RIGHT, DR_move, DR_move) 
+            ? linearMovement(myPosition, board, i, j, Directions.DOWN_RIGHT, DR_MOVE, DR_MOVE) 
             : nullList);
         return diagonalMoves;
     }
@@ -218,13 +218,13 @@ public class ChessPiece {
         ArrayList<ChessMove> nullList = new ArrayList<>();
         nullList.add(null);
         // up
-        vertMoves.addAll((UL.test(i)) ? linearMovement(myPosition, board, i, j, Directions.UP, UL_move, nop) : nullList);
+        vertMoves.addAll((UL.test(i)) ? linearMovement(myPosition, board, i, j, Directions.UP, UL_MOVE, NOP) : nullList);
         // down
-        vertMoves.addAll((DR.test(i)) ? linearMovement(myPosition, board, i, j, Directions.DOWN, DR_move, nop) : nullList);
+        vertMoves.addAll((DR.test(i)) ? linearMovement(myPosition, board, i, j, Directions.DOWN, DR_MOVE, NOP) : nullList);
         // left
-        vertMoves.addAll((UL.test(j)) ? linearMovement(myPosition, board, i, j, Directions.LEFT, nop, UL_move) : nullList);
+        vertMoves.addAll((UL.test(j)) ? linearMovement(myPosition, board, i, j, Directions.LEFT, NOP, UL_MOVE) : nullList);
         // right
-        vertMoves.addAll((DR.test(j)) ? linearMovement(myPosition, board, i, j, Directions.RIGHT, nop, DR_move) : nullList);
+        vertMoves.addAll((DR.test(j)) ? linearMovement(myPosition, board, i, j, Directions.RIGHT, NOP, DR_MOVE) : nullList);
         return vertMoves;
     }
 
