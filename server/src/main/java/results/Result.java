@@ -4,7 +4,7 @@ import java.util.List;
 import model.GameData;
 
 public record Result(){
-    public record Register(String username, String password, String email) {}
+    public record Register(String username, String authToken) {}
     public record Login(String username, String authToken) {}
     public record Logout() {}
     public record GetGames(List<GameData> games) {}

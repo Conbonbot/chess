@@ -44,4 +44,10 @@ public class MemoryGameDAO implements GameDAO {
             }
         }
     }
+
+    @Override
+    public void clear(){
+        System.out.println("Clear | GameDAO");
+        games.clear();
+    }
 }  

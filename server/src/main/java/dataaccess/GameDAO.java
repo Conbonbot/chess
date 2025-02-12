@@ -9,5 +9,6 @@ public interface GameDAO {
     GameData getGame(int gameID);
     ArrayList<GameData> listGames();
     void updateGame(String gameName, int gameID);
+    void clear();
 
 }

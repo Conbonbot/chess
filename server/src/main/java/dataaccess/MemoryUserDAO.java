@@ -9,7 +9,6 @@ public class MemoryUserDAO implements UserDAO{
 
     @Override
     public UserData addUserData(UserData userData){
-        userData = new UserData(userData.username(), userData.password(), userData.email());
         userList.add(userData);
         return userData;
     }
@@ -21,7 +20,12 @@ public class MemoryUserDAO implements UserDAO{
                 return user;
             }
         }
-        // Change
         return null;
+    }
+
+    @Override
+    public void clear(){
+        System.out.println("Clear | UserDAO");
+        userList.clear();
     }
 }
