@@ -1,8 +1,16 @@
 package service;
 import requests.Request;
 import results.Result;
+import dataaccess.UserDAO;
 
 public class UserService {
+
+    private final UserDAO userAccess;
+
+    public UserService(UserDAO userAccess){
+        this.userAccess = userAccess;
+    }
+
     public Result.Register register(Request.Register registerRequest) {
 
         return new Result.Register(null, null, null);

@@ -1,11 +1,23 @@
 package server;
 
-import spark.Request;
-import spark.Response;
+import requests.Request;
+import service.DatabaseService;
+import service.GameService;
+import service.UserService;
 import spark.Spark;
 import static spark.Spark.delete;
 
+
 public class Server {
+    private final DatabaseService dbService;
+    private final GameService gameService;
+    private final UserService userService;
+
+    public Server(DatabaseService dbService, GameService gameService, UserService userService){
+        this.dbService = dbService;
+        this.gameService = gameService;
+        this.userService = userService;
+    }
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
@@ -23,8 +35,12 @@ public class Server {
         return Spark.port();
     }
 
-    public Object clear(Request req, Response res){
-        System.out.println("This is a big test");
+    public Object clear(spark.Request req, spark.Response res){
+        System.out.println("clearing db");
+        // Handle request
+        Request.Delete delete = new Request.Delete();
+        dbService.clear(delete);
+        
         return "";
     }
 
