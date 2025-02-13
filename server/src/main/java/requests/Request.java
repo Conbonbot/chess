@@ -5,7 +5,8 @@ public record Request() {
     public record Login(String username, String password) {}
     public record Logout(String authToken) {}
     public record GetGames(String authToken) {}
-    public record CreateGame(String authToken, String gameName) {}
-    public record JoinGame(String authToken, String playerColor, int gameID) {}
+    public record CreateGame(String gameName) {}
+    public record JoinGame(String playerColor, int gameID) {}
     public record Delete() {}
+    public record Auth(String authToken) {}
 }

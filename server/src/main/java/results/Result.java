@@ -11,4 +11,5 @@ public record Result(){
     public record CreateGame(int gameID) {}
     public record JoinGame() {}
     public record Delete() {}
+    public record Error(String message){}
 }
