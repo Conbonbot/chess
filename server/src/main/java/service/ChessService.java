@@ -2,6 +2,7 @@ package service;
 import java.util.UUID;
 
 import dataaccess.AuthDAO;
+import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
 import dataaccess.UserDAO;
 import model.AuthData;
@@ -58,16 +59,24 @@ public class ChessService {
     }
 
     public Result.Register register(Request.Register registerRequest) {
-        if(userAccess.getUser(registerRequest.username()) == null){
-            String username = registerRequest.username();
-            UserData user = new UserData(username, registerRequest.password(), registerRequest.email());
-            userAccess.addUserData(user);
-            String token = generateToken();
-            authAccess.addAuthData(new AuthData(token, username));
-            return new Result.Register(username, token);
+        if(registerRequest.username() == null || registerRequest.password() == null || registerRequest.email() == null){
+            return new Result.Register(null, null, "Error: bad request");
         }
-        // Probably throw an error here
-        return null;
+        String username = registerRequest.username();
+        UserData user = new UserData(username, registerRequest.password(), registerRequest.email());
+        try{
+            userAccess.addUserData(user);
+        }
+        catch(DataAccessException ex){
+            return new Result.Register(null, null, "Error: already taken");
+        }
+        String token;
+        do{
+            token = generateToken();
+        }
+        while(authAccess.getAuth(token) != null);
+        authAccess.addAuthData(new AuthData(token, username));
+        return new Result.Register(username, token, "");
     }
 
     public Result.Login login(Request.Login loginRequest){
@@ -86,10 +95,10 @@ public class ChessService {
     public Result.Logout logout(Request.Logout logoutRequest){
         AuthData authData = authAccess.getAuth(logoutRequest.authToken());
         if(authData != null){
-            authAccess.removeAuthData(authData);
-            return new Result.Logout();
+            authAccess.removeAuthData(authData); 
+            return new Result.Logout("");
         }
-        return new Result.Logout();
+        return new Result.Logout("Error: unauthorized");
     }
 
     private static String generateToken(){

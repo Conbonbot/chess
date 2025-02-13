@@ -1,14 +1,30 @@
 package passoff.server;
 
-import chess.ChessGame;
-import org.junit.jupiter.api.*;
-import passoff.model.*;
-import server.Server;
-
 import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Locale;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+
+import chess.ChessGame;
+import passoff.model.TestAuthResult;
+import passoff.model.TestCreateRequest;
+import passoff.model.TestCreateResult;
+import passoff.model.TestJoinRequest;
+import passoff.model.TestListEntry;
+import passoff.model.TestListResult;
+import passoff.model.TestResult;
+import passoff.model.TestUser;
+import server.Server;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class StandardAPITests {

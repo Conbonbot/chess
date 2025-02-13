@@ -65,17 +65,27 @@ public class Server {
     public Object register(spark.Request req, spark.Response res){
         var user = new Gson().fromJson(req.body(), Request.Register.class);
         var userRes = chessService.register(user);
-        if(userRes == null){
-            res.status(403);
-            return new Gson().toJson(new Result.Error("Error: already taken"));
+        if(userRes.errorMessage().isEmpty()){
+            return new Gson().toJson(userRes);
         }
-        return new Gson().toJson(userRes);
+        Result.Error err = new Result.Error(userRes.errorMessage());
+        if(userRes.errorMessage().contains("bad request")){
+            res.status(400);
+        }
+        else if(userRes.errorMessage().contains("already taken")){
+            res.status(403);
+        }
+        else{
+            res.status(500);
+        }
+        return new Gson().toJson(err);
+        
     }
 
     public Object login(spark.Request req, spark.Response res){
         var login = new Gson().fromJson(req.body(), Request.Login.class);
         var loginRes = chessService.login(login);
-        if(loginRes == null){
+        if(loginRes.authToken() == null){
             res.status(401);
             return new Gson().toJson(new Result.Error("Error: unauthorized"));
         }
@@ -85,7 +95,11 @@ public class Server {
     public Object logout(spark.Request req, spark.Response res){
         var logout = new Request.Logout(req.headers("Authorization"));
         var logoutRes = chessService.logout(logout);
-        return new Gson().toJson(logoutRes);
+        if(logoutRes.errorMessage().isEmpty()){
+            return new Gson().toJson(logoutRes);
+        }
+        res.status(401);
+        return new Gson().toJson(new Result.Error(logoutRes.errorMessage()));
     }
 
     public Object listGames(spark.Request req, spark.Response res){
@@ -99,6 +113,7 @@ public class Server {
         var create = new Gson().fromJson(req.body(), Request.CreateGame.class);
         var createRes = chessService.createGame(auth, create);
         if(createRes.gameID() == -1){
+            res.status(401);
             return new Gson().toJson(new Result.Error("Error: unauthorized"));
         }
         return new Gson().toJson(createRes);

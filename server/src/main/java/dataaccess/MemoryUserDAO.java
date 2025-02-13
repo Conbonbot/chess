@@ -8,9 +8,12 @@ public class MemoryUserDAO implements UserDAO{
     final private ArrayList<UserData> userList = new ArrayList<>();
 
     @Override
-    public UserData addUserData(UserData userData){
-        userList.add(userData);
-        return userData;
+    public UserData addUserData(UserData userData) throws DataAccessException{
+        if(getUser(userData.username()) == null){
+            userList.add(userData);
+            return userData;
+        }
+        throw new DataAccessException("Error: already taken");
     }
 
     @Override
