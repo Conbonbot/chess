@@ -34,9 +34,9 @@ public class ChessService {
 
     public Result.GetGames showGames(Request.GetGames showGameRequest) {
         if(checkAuth(showGameRequest.authToken())){
-            return new Result.GetGames(gameAccess.listGames());
+            return new Result.GetGames(gameAccess.listGames(), "");
         }
-        return new Result.GetGames(null);
+        return new Result.GetGames(null, "Error: unauthorized");
     }
 
     public Result.CreateGame createGame(String authToken, Request.CreateGame createGameRequest){
@@ -47,16 +47,35 @@ public class ChessService {
     }
 
     public Result.JoinGame joinGame(String authToken, Request.JoinGame joinGameRequest) {
-        // get user by auth, add username
+        if(joinGameRequest.playerColor() == null || joinGameRequest.playerColor().isEmpty() || joinGameRequest.gameID() == 0){
+            return new Result.JoinGame("Error: bad request");
+        }
         if(checkAuth(authToken)){
-            if(joinGameRequest.playerColor().equals("WHITE")){
-                gameAccess.updateGame(joinGameRequest.gameID(), authAccess.getAuth(authToken).username(), null);
-            }
-            else{
-                gameAccess.updateGame(joinGameRequest.gameID(), null, authAccess.getAuth(authToken).username());
+            switch (joinGameRequest.playerColor()) {
+                case "WHITE" -> {
+                    if(gameAccess.getGame(joinGameRequest.gameID()).whiteUsername() == null){
+                        gameAccess.updateGame(joinGameRequest.gameID(), authAccess.getAuth(authToken).username(), null);
+                        return new Result.JoinGame("");
+                    }
+                    else{
+                        return new Result.JoinGame("Error: already taken");
+                    }
+                }
+                case "BLACK" -> {
+                    if(gameAccess.getGame(joinGameRequest.gameID()).blackUsername() == null){
+                        gameAccess.updateGame(joinGameRequest.gameID(), null, authAccess.getAuth(authToken).username());
+                        return new Result.JoinGame("");
+                    }
+                    else{
+                        return new Result.JoinGame("Error: already taken");
+                    }
+                }
+                default -> {
+                    return new Result.JoinGame("Error: bad request");
+                }
             }
         }
-        return new Result.JoinGame();
+        return new Result.JoinGame("Error: unauthorized");
     }
 
     public Result.Register register(Request.Register registerRequest) {

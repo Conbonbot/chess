@@ -75,9 +75,6 @@ public class Server {
         else if(userRes.errorMessage().contains("already taken")){
             res.status(403);
         }
-        else{
-            res.status(500);
-        }
         return new Gson().toJson(err);
         
     }
@@ -105,7 +102,11 @@ public class Server {
     public Object listGames(spark.Request req, spark.Response res){
         var auth = new Request.GetGames(req.headers("Authorization"));
         var listGamesRes = chessService.showGames(auth);
-        return new Gson().toJson(listGamesRes);
+        if(listGamesRes.errorMessage().isEmpty()){
+            return new Gson().toJson(listGamesRes);
+        }
+        res.status(401);
+        return new Gson().toJson(new Result.Error(listGamesRes.errorMessage()));
     }
 
     public Object createGame(spark.Request req, spark.Response res){
@@ -123,7 +124,20 @@ public class Server {
         String auth = req.headers("Authorization");
         var join = new Gson().fromJson(req.body(), Request.JoinGame.class);
         var joinRes = chessService.joinGame(auth, join);
-        return new Gson().toJson(joinRes);
+        if(joinRes.errorMessage().isEmpty()){
+            return new Gson().toJson(joinRes);
+        }
+        if(joinRes.errorMessage().contains("unauthorized")){
+            res.status(401);
+        }
+        else if(joinRes.errorMessage().contains("already taken")){
+            res.status(403);
+        }
+        else if(joinRes.errorMessage().contains("bad request")){
+            res.status(400);
+        }
+        return new Gson().toJson(new Result.Error(joinRes.errorMessage()));
+        
     }
 
     
