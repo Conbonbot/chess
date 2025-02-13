@@ -47,12 +47,13 @@ public class ChessService {
     }
 
     public Result.JoinGame joinGame(String authToken, Request.JoinGame joinGameRequest) {
+        // get user by auth, add username
         if(checkAuth(authToken)){
             if(joinGameRequest.playerColor().equals("WHITE")){
-                gameAccess.updateGame(joinGameRequest.gameID(), "WHITE", null);
+                gameAccess.updateGame(joinGameRequest.gameID(), authAccess.getAuth(authToken).username(), null);
             }
             else{
-                gameAccess.updateGame(joinGameRequest.gameID(), null, "BLACK");
+                gameAccess.updateGame(joinGameRequest.gameID(), null, authAccess.getAuth(authToken).username());
             }
         }
         return new Result.JoinGame();
