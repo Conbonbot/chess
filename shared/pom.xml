@@ -41,6 +41,9 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
+                            <sources>
+                                <source>src/main/model</source>
+                            </sources>
                             <archive>
                                 <manifest>
                                     <mainClass>

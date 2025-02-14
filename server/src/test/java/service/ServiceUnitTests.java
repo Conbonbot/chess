@@ -2,10 +2,10 @@ package service;
 
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
@@ -27,14 +27,9 @@ public class ServiceUnitTests{
 
     private String authToken;
 
-    @BeforeAll
-    public static void init(){
-        service = new ChessService(new MemoryAuthDAO(), new MemoryGameDAO(), new MemoryUserDAO());
-    }
-
     @BeforeEach
     public void setup(){
-        service.clear(new Request.Delete());
+        service = new ChessService(new MemoryAuthDAO(), new MemoryGameDAO(), new MemoryUserDAO());
 
         // Log in user
         Request.Register regReq = new Request.Register("username", "password", "example@email.com");
@@ -45,6 +40,7 @@ public class ServiceUnitTests{
     
     // positive register
     @Test
+    @Order(1)
     @DisplayName("Normal user registration")
     public void positiveRegister(){
         Request.Register regReq = new Request.Register("username1", "password1", "example1@email.com");
@@ -56,6 +52,7 @@ public class ServiceUnitTests{
     
     // negative register
     @Test
+    @Order(2)
     @DisplayName("Invalid user registration")
     public void invalidRegister(){
         Request.Register regReq1 = new Request.Register("username1", "password1", "example1@email.com");
@@ -69,6 +66,7 @@ public class ServiceUnitTests{
     
     // positive login
     @Test
+    @Order(3)
     @DisplayName("Normal user login")
     public void normalLogin(){
         Request.Login logReq = new Request.Login("username", "password");
@@ -80,6 +78,7 @@ public class ServiceUnitTests{
 
     // negative login
     @Test
+    @Order(4)
     @DisplayName("Invalid user login")
     public void invalidLogin(){
         Request.Login logReq = new Request.Login("username", "password?");
@@ -91,6 +90,7 @@ public class ServiceUnitTests{
 
     // positive logout
     @Test
+    @Order(5)
     @DisplayName("Valid user logout")
     public void validLogout(){
         Request.Logout logReq = new Request.Logout(authToken);
@@ -102,6 +102,7 @@ public class ServiceUnitTests{
 
     // negative logout
     @Test
+    @Order(6)
     @DisplayName("Invalid user logout")
     public void invalidLogout(){
         Request.Logout logReq = new Request.Logout(authToken);
@@ -113,6 +114,7 @@ public class ServiceUnitTests{
 
     // Positive showGames
     @Test
+    @Order(7)
     @DisplayName("Valid show games")
     public void validShowGames(){
         Request.GetGames gamesReq = new Request.GetGames(authToken);
@@ -124,6 +126,7 @@ public class ServiceUnitTests{
 
     // Negative showGames
     @Test
+    @Order(8)
     @DisplayName("Invalid show games")
     public void invalidShowGames(){
         Request.Logout logReq = new Request.Logout(authToken);
@@ -136,6 +139,7 @@ public class ServiceUnitTests{
 
     // positive createGame
     @Test
+    @Order(9)
     @DisplayName("Valid createGame")
     public void validCreateGame(){
         Request.CreateGame gameReq = new Request.CreateGame("game");
@@ -147,6 +151,7 @@ public class ServiceUnitTests{
 
     // negative createGame
     @Test
+    @Order(10)
     @DisplayName("Invalid creation")
     public void invalidCreateGame(){
         Request.CreateGame gameReq = new Request.CreateGame("game");
@@ -160,9 +165,10 @@ public class ServiceUnitTests{
 
     // positive joinGame
     @Test
+    @Order(11)
     @DisplayName("valid joinGame")
     public void validJoinGame(){
-        service.createGame(authToken, new Request.CreateGame("game"));
+        service.createGame(authToken, new Request.CreateGame("game_test"));
         Request.JoinGame joinReq = new Request.JoinGame("WHITE", 1);
 
         var joinRes = service.joinGame(authToken, joinReq);
@@ -172,6 +178,7 @@ public class ServiceUnitTests{
 
     // negative joinGame
     @Test
+    @Order(12)
     @DisplayName("Invalid joinGame")
     public void invalidJoinGame(){
         service.createGame(authToken, new Request.CreateGame("game"));
@@ -185,6 +192,7 @@ public class ServiceUnitTests{
 
     // Positive clear
     @Test
+    @Order(13)
     @DisplayName("Valid clear")
     public void validClear(){
         Request.Delete delReq = new Request.Delete();
@@ -196,6 +204,7 @@ public class ServiceUnitTests{
 
     // Negative clear
     @Test
+    @Order(14)
     @DisplayName("Invalid clear")
     public void invalidClear(){
         Request.Delete delReq = new Request.Delete();

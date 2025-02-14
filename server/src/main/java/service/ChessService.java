@@ -55,7 +55,7 @@ public class ChessService {
         if(checkAuth(authToken)){
             switch (joinGameRequest.playerColor()) {
                 case "WHITE" -> {
-                    if(gameAccess.getGame(joinGameRequest.gameID()).whiteUsername() == null){
+                    if(gameAccess.getGame(joinGameRequest.gameID()) != null && gameAccess.getGame(joinGameRequest.gameID()).whiteUsername() == null){
                         gameAccess.updateGame(joinGameRequest.gameID(), authAccess.getAuth(authToken).username(), null);
                         return new Result.JoinGame("");
                     }
@@ -64,7 +64,7 @@ public class ChessService {
                     }
                 }
                 case "BLACK" -> {
-                    if(gameAccess.getGame(joinGameRequest.gameID()).blackUsername() == null){
+                    if(gameAccess.getGame(joinGameRequest.gameID()) != null && gameAccess.getGame(joinGameRequest.gameID()).blackUsername() == null){
                         gameAccess.updateGame(joinGameRequest.gameID(), null, authAccess.getAuth(authToken).username());
                         return new Result.JoinGame("");
                     }
