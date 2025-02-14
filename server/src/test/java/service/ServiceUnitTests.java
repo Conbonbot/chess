@@ -104,7 +104,7 @@ public class ServiceUnitTests{
     @Test
     @DisplayName("Invalid user logout")
     public void invalidLogout(){
-        
+        Request.Logout logReq = new Request.Logout(authToken);
         service.logout(logReq);
         var logRes = service.logout(logReq);
 
@@ -159,10 +159,51 @@ public class ServiceUnitTests{
     }
 
     // positive joinGame
+    @Test
+    @DisplayName("valid joinGame")
+    public void validJoinGame(){
+        service.createGame(authToken, new Request.CreateGame("game"));
+        Request.JoinGame joinReq = new Request.JoinGame("WHITE", 1);
+
+        var joinRes = service.joinGame(authToken, joinReq);
+
+        Assertions.assertTrue(joinRes.errorMessage().isEmpty());
+    }
+
     // negative joinGame
+    @Test
+    @DisplayName("Invalid joinGame")
+    public void invalidJoinGame(){
+        service.createGame(authToken, new Request.CreateGame("game"));
+        service.logout(new Request.Logout(authToken));
+        Request.JoinGame joinReq = new Request.JoinGame("WHITE", 1);
+
+        var joinRes = service.joinGame(authToken, joinReq);
+
+        Assertions.assertFalse(joinRes.errorMessage().isEmpty());
+    }
 
     // Positive clear
+    @Test
+    @DisplayName("Valid clear")
+    public void validClear(){
+        Request.Delete delReq = new Request.Delete();
+
+        var delRes = service.clear(delReq);
+
+        Assertions.assertTrue(delRes.errorMessage().isEmpty());
+    }
+
     // Negative clear
+    @Test
+    @DisplayName("Invalid clear")
+    public void invalidClear(){
+        Request.Delete delReq = new Request.Delete();
+
+        var delRes = service.clear(delReq);
+
+        Assertions.assertFalse(delRes == null);
+    }
 
     
 

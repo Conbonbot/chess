@@ -10,6 +10,6 @@ public record Result(){
     public record GetGames(List<GameData> games, String errorMessage) {}
     public record CreateGame(int gameID) {}
     public record JoinGame(String errorMessage) {}
-    public record Delete() {}
+    public record Delete(String errorMessage) {}
     public record Error(String message){}
 }

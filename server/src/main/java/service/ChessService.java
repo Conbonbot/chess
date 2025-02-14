@@ -23,13 +23,15 @@ public class ChessService {
         this.userAccess = userAccess;
     }
 
-    public void clear(Request.Delete clearDatabaseRequest){
+    public Result.Delete clear(Request.Delete clearDatabaseRequest){
         // clear authDAO
         authAccess.clear();
         // clear userDAO
         gameAccess.clear();
         // clear gameDAO
         userAccess.clear();
+
+        return new Result.Delete("");
     }
 
     public Result.GetGames showGames(Request.GetGames showGameRequest) {
