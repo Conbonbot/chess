@@ -108,13 +108,21 @@ public class ChessGame {
                 // Check for other pieces
                 if(cBoard[i][j] != null && cBoard[i][j].getTeamColor() != teamColor){
                     // Check if other piece could take king
-                    ChessPiece otherPiece = cBoard[i][j];
-                    for(ChessMove otherMove : otherPiece.pieceMoves(copyBoard, new ChessPosition(arrayToRow(i), arrayToCol(j)))){
-                        if(otherMove.getEndPosition().equals(kingPosition)){
-                            return false;
-                        }
+                    if(!containsKing(copyBoard, cBoard, kingPosition, i, j)){
+                        return false;
                     }
                 }
+            }
+        }
+        return true;
+    }
+
+    private boolean containsKing(ChessBoard copyBoard, ChessPiece[][] cBoard, ChessPosition kingPosition, int i, int j){
+        // Check if other piece could take king
+        ChessPiece otherPiece = cBoard[i][j];
+        for(ChessMove otherMove : otherPiece.pieceMoves(copyBoard, new ChessPosition(arrayToRow(i), arrayToCol(j)))){
+            if(otherMove.getEndPosition().equals(kingPosition)){
+                return false;
             }
         }
         return true;
