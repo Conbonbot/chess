@@ -90,13 +90,73 @@ public class ServiceUnitTests{
     }
 
     // positive logout
+    @Test
+    @DisplayName("Valid user logout")
+    public void validLogout(){
+        Request.Logout logReq = new Request.Logout(authToken);
+
+        var logRes = service.logout(logReq);
+
+        Assertions.assertTrue(logRes.errorMessage().isEmpty());
+    }
+
     // negative logout
+    @Test
+    @DisplayName("Invalid user logout")
+    public void invalidLogout(){
+        
+        service.logout(logReq);
+        var logRes = service.logout(logReq);
+
+        Assertions.assertFalse(logRes.errorMessage().isEmpty());
+    }
 
     // Positive showGames
+    @Test
+    @DisplayName("Valid show games")
+    public void validShowGames(){
+        Request.GetGames gamesReq = new Request.GetGames(authToken);
+        
+        var gamesRes = service.showGames(gamesReq);
+
+        Assertions.assertTrue(gamesRes.errorMessage().isEmpty());
+    }
+
     // Negative showGames
+    @Test
+    @DisplayName("Invalid show games")
+    public void invalidShowGames(){
+        Request.Logout logReq = new Request.Logout(authToken);
+        Request.GetGames gamesReq = new Request.GetGames(authToken);
+        service.logout(logReq);
+        var gamesRes = service.showGames(gamesReq);
+
+        Assertions.assertFalse(gamesRes.errorMessage().isEmpty());
+    }
 
     // positive createGame
+    @Test
+    @DisplayName("Valid createGame")
+    public void validCreateGame(){
+        Request.CreateGame gameReq = new Request.CreateGame("game");
+        
+        var gameRes = service.createGame(authToken, gameReq);
+
+        Assertions.assertTrue(gameRes.gameID() != -1);
+    }
+
     // negative createGame
+    @Test
+    @DisplayName("Invalid creation")
+    public void invalidCreateGame(){
+        Request.CreateGame gameReq = new Request.CreateGame("game");
+        Request.Logout logReq = new Request.Logout(authToken);
+        service.logout(logReq);
+
+        var gameRes = service.createGame(authToken, gameReq);
+
+        Assertions.assertFalse(gameRes.gameID() == 1);
+    }
 
     // positive joinGame
     // negative joinGame
