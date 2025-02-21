@@ -2,11 +2,12 @@ package dataaccess;
 
 import java.sql.SQLException;
 
+import exception.ResponseException;
 import model.AuthData;
 
 public class MySqlAuthDAO implements AuthDAO{
 
-    public MySqlAuthDAO(){
+    public MySqlAuthDAO() throws ResponseException{
         configureDatabase();
     }
 
@@ -50,23 +51,17 @@ public class MySqlAuthDAO implements AuthDAO{
         """
     };
 
-    private void configureDatabase(){
-        try{
-            DatabaseManager.createDatabase();
-        }
-        catch(DataAccessException ex){}
-        try {
-            var conn = DatabaseManager.getConnection();
-            for(var statment : createTable){
-                try(var sanatized = conn.prepareStatement(statment)){
-                    sanatized.executeUpdate();
-                }
-                catch(SQLException ex){
-                    System.out.println(ex.toString());
-                }
+    private void configureDatabase() throws ResponseException{
+        DatabaseManager.createDatabase();
+        var conn = DatabaseManager.getConnection();
+        for(var statment : createTable){
+            try(var sanatized = conn.prepareStatement(statment)){
+                sanatized.executeUpdate();
             }
-        } 
-        catch (DataAccessException e) {
+            catch(SQLException ex){
+                // TODO: change response code
+                throw new ResponseException(666, "Something happened");
+            }
         }
     }
 

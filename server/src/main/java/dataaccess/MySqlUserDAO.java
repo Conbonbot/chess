@@ -10,7 +10,7 @@ import model.UserData;
 
 public class MySqlUserDAO implements UserDAO{
 
-    public MySqlUserDAO(){
+    public MySqlUserDAO() throws ResponseException{
         configureDatabase();
     }
 
@@ -40,6 +40,7 @@ public class MySqlUserDAO implements UserDAO{
 
     private void insertUser(UserData userData){
         String hashedPassword = BCrypt.hashpw(userData.password(), BCrypt.gensalt());
+        /*
 
         try(var conn = DatabaseManager.getConnection()){
             var statement = "INSERT INTO user (username, password, email) VALUES ('";
@@ -54,6 +55,7 @@ public class MySqlUserDAO implements UserDAO{
         catch(SQLException ex){
             System.out.println(ex);
         }
+             */
     }
 
     @Override
@@ -79,23 +81,17 @@ public class MySqlUserDAO implements UserDAO{
         """
     };
 
-    private void configureDatabase(){
-        try{
-            DatabaseManager.createDatabase();
-        }
-        catch(DataAccessException ex){}
-        try {
-            var conn = DatabaseManager.getConnection();
-            for(var statment : createTable){
-                try(var sanatized = conn.prepareStatement(statment)){
-                    sanatized.executeUpdate();
-                }
-                catch(SQLException ex){
-                    System.out.println(ex.toString());
-                }
+    private void configureDatabase() throws ResponseException{
+        DatabaseManager.createDatabase();
+        var conn = DatabaseManager.getConnection();
+        for(var statment : createTable){
+            try(var sanatized = conn.prepareStatement(statment)){
+                sanatized.executeUpdate();
             }
-        } 
-        catch (DataAccessException e) {
+            catch(SQLException ex){
+                // TODO: change response code
+                throw new ResponseException(666, "Something happened");
+            }
         }
     }
 
