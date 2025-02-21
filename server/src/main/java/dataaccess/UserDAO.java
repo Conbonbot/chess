@@ -1,7 +1,8 @@
 package dataaccess;
+import exception.ResponseException;
 import model.UserData;
 public interface UserDAO {
-    UserData addUserData(UserData userData) throws DataAccessException;
-    UserData getUser(String username);
+    UserData addUserData(UserData userData) throws ResponseException;
+    UserData getUser(String username) throws ResponseException;
     void clear();
 }

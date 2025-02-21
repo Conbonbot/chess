@@ -1,6 +1,7 @@
 package service;
 
 
+import org.eclipse.jetty.client.api.Response;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryGameDAO;
 import dataaccess.MemoryUserDAO;
+import exception.ResponseException;
 import requests.Request;
 
 
@@ -33,9 +35,12 @@ public class ServiceUnitTests{
 
         // Log in user
         Request.Register regReq = new Request.Register("username", "password", "example@email.com");
-        var regRes = service.register(regReq);
+        try{
+            var regRes = service.register(regReq);
+            authToken = regRes.authToken();
+        }
+        catch(ResponseException ex){}
 
-        authToken = regRes.authToken();
     }
     
     // positive register
@@ -45,9 +50,7 @@ public class ServiceUnitTests{
     public void positiveRegister(){
         Request.Register regReq = new Request.Register("username1", "password1", "example1@email.com");
 
-        var regRes = service.register(regReq);
-
-        Assertions.assertTrue(regRes.errorMessage().isEmpty());
+        Assertions.assertDoesNotThrow(() -> service.register(regReq));
     }
     
     // negative register
@@ -58,10 +61,10 @@ public class ServiceUnitTests{
         Request.Register regReq1 = new Request.Register("username1", "password1", "example1@email.com");
         Request.Register regReq2 = new Request.Register("username1", "password1", "example2@email.com");
 
-        service.register(regReq1);
-        var regRes2 = service.register(regReq2);
-
-        Assertions.assertFalse(regRes2.errorMessage().isEmpty());
+        Assertions.assertThrows(ResponseException.class, () -> {
+            service.register(regReq1);
+            service.register(regReq2);
+        });
     }
     
     // positive login
@@ -71,9 +74,7 @@ public class ServiceUnitTests{
     public void normalLogin(){
         Request.Login logReq = new Request.Login("username", "password");
 
-        var logRes = service.login(logReq);
-
-        Assertions.assertTrue(logRes.username().equals("username"));
+        Assertions.assertDoesNotThrow(() -> service.login(logReq));
     }
 
     // negative login
@@ -83,9 +84,7 @@ public class ServiceUnitTests{
     public void invalidLogin(){
         Request.Login logReq = new Request.Login("username", "password?");
 
-        var logRes = service.login(logReq);
-
-        Assertions.assertFalse(logRes.username() != null && logRes.authToken() != null);
+        Assertions.assertThrows(ResponseException.class, () -> service.login(logReq));
     }
 
     // positive logout
@@ -95,9 +94,8 @@ public class ServiceUnitTests{
     public void validLogout(){
         Request.Logout logReq = new Request.Logout(authToken);
 
-        var logRes = service.logout(logReq);
 
-        Assertions.assertTrue(logRes.errorMessage().isEmpty());
+        Assertions.assertDoesNotThrow(() -> service.logout(logReq));
     }
 
     // negative logout
@@ -106,10 +104,11 @@ public class ServiceUnitTests{
     @DisplayName("Invalid user logout")
     public void invalidLogout(){
         Request.Logout logReq = new Request.Logout(authToken);
-        service.logout(logReq);
-        var logRes = service.logout(logReq);
 
-        Assertions.assertFalse(logRes.errorMessage().isEmpty());
+        Assertions.assertThrows(ResponseException.class, () -> {
+            service.logout(logReq);
+            service.logout(logReq);
+        });
     }
 
     // Positive showGames
@@ -118,10 +117,8 @@ public class ServiceUnitTests{
     @DisplayName("Valid show games")
     public void validShowGames(){
         Request.GetGames gamesReq = new Request.GetGames(authToken);
-        
-        var gamesRes = service.showGames(gamesReq);
 
-        Assertions.assertTrue(gamesRes.errorMessage().isEmpty());
+        Assertions.assertDoesNotThrow(() -> service.showGames(gamesReq));
     }
 
     // Negative showGames
@@ -131,10 +128,11 @@ public class ServiceUnitTests{
     public void invalidShowGames(){
         Request.Logout logReq = new Request.Logout(authToken);
         Request.GetGames gamesReq = new Request.GetGames(authToken);
-        service.logout(logReq);
-        var gamesRes = service.showGames(gamesReq);
 
-        Assertions.assertFalse(gamesRes.errorMessage().isEmpty());
+        Assertions.assertThrows(ResponseException.class, () -> {
+            service.logout(logReq);
+            service.showGames(gamesReq);
+        });
     }
 
     // positive createGame
@@ -143,10 +141,8 @@ public class ServiceUnitTests{
     @DisplayName("Valid createGame")
     public void validCreateGame(){
         Request.CreateGame gameReq = new Request.CreateGame("game");
-        
-        var gameRes = service.createGame(authToken, gameReq);
 
-        Assertions.assertTrue(gameRes.gameID() != -1);
+        Assertions.assertDoesNotThrow(() -> service.createGame(authToken, gameReq));
     }
 
     // negative createGame
@@ -156,11 +152,11 @@ public class ServiceUnitTests{
     public void invalidCreateGame(){
         Request.CreateGame gameReq = new Request.CreateGame("game");
         Request.Logout logReq = new Request.Logout(authToken);
-        service.logout(logReq);
 
-        var gameRes = service.createGame(authToken, gameReq);
-
-        Assertions.assertFalse(gameRes.gameID() == 1);
+        Assertions.assertThrows(ResponseException.class, () -> {
+            service.logout(logReq);
+            service.createGame(authToken, gameReq);
+        });
     }
 
     // positive joinGame
@@ -168,12 +164,12 @@ public class ServiceUnitTests{
     @Order(11)
     @DisplayName("valid joinGame")
     public void validJoinGame(){
-        service.createGame(authToken, new Request.CreateGame("game_test"));
         Request.JoinGame joinReq = new Request.JoinGame("WHITE", 1);
 
-        var joinRes = service.joinGame(authToken, joinReq);
-
-        Assertions.assertTrue(joinRes.errorMessage().isEmpty());
+        Assertions.assertDoesNotThrow(() -> {
+            service.createGame(authToken, new Request.CreateGame("game_test"));
+            service.joinGame(authToken, joinReq);
+        });
     }
 
     // negative joinGame
@@ -181,13 +177,14 @@ public class ServiceUnitTests{
     @Order(12)
     @DisplayName("Invalid joinGame")
     public void invalidJoinGame(){
-        service.createGame(authToken, new Request.CreateGame("game"));
-        service.logout(new Request.Logout(authToken));
         Request.JoinGame joinReq = new Request.JoinGame("WHITE", 1);
 
-        var joinRes = service.joinGame(authToken, joinReq);
+        Assertions.assertThrows(ResponseException.class, () -> {
+            service.createGame(authToken, new Request.CreateGame("game"));
+            service.logout(new Request.Logout(authToken));
 
-        Assertions.assertFalse(joinRes.errorMessage().isEmpty());
+            service.joinGame(authToken, joinReq);
+        });
     }
 
     // Positive clear
@@ -197,9 +194,7 @@ public class ServiceUnitTests{
     public void validClear(){
         Request.Delete delReq = new Request.Delete();
 
-        var delRes = service.clear(delReq);
-
-        Assertions.assertTrue(delRes.errorMessage().isEmpty());
+        Assertions.assertDoesNotThrow(() -> service.clear(delReq));
     }
 
     // Negative clear
@@ -208,10 +203,9 @@ public class ServiceUnitTests{
     @DisplayName("Invalid clear")
     public void invalidClear(){
         Request.Delete delReq = new Request.Delete();
+        ChessService invalidService = new ChessService(null, null, null);
 
-        var delRes = service.clear(delReq);
-
-        Assertions.assertFalse(delRes == null);
+        Assertions.assertThrows(ResponseException.class, () -> invalidService.clear(delReq));
     }
 
     

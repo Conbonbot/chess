@@ -34,12 +34,18 @@ public class MySqlAuthDAO implements AuthDAO{
         throw new UnsupportedOperationException("Unimplemented method 'clear'");
     }
 
+    @Override
+    public String generateAuth() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'generateAuth'");
+    }
+
+
     private final String[] createTable = {
         """
         CREATE TABLE IF NOT EXISTS auth (
           `authToken` varchar(256) NOT NULL,
-          `username` varchar(256) NOT NULL
-          PRIMARY KEY ('USERNAME')
+          `username` varchar(256) NOT NULL PRIMARY KEY
         )
         """
     };
@@ -63,5 +69,7 @@ public class MySqlAuthDAO implements AuthDAO{
         catch (DataAccessException e) {
         }
     }
+
+   
 
 }

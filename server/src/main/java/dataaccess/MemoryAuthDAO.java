@@ -1,7 +1,9 @@
 package dataaccess;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
+import exception.ResponseException;
 import model.AuthData;
 
 public class MemoryAuthDAO implements AuthDAO {
@@ -15,13 +17,24 @@ public class MemoryAuthDAO implements AuthDAO {
     }
 
     @Override
-    public AuthData getAuth(String authToken){
+    public AuthData getAuth(String authToken) throws ResponseException{
         for(AuthData authData : authList){
             if(authData.authToken().equals(authToken)){
                 return authData;
             }
         }
-        return null;
+        throw new ResponseException(401, "Error: unauthorized");
+    }
+
+    @Override
+    public String generateAuth(){
+        String auth = UUID.randomUUID().toString();
+        for(AuthData authData : authList){
+            if(authData.authToken().equals(auth)){
+                auth = generateAuth();
+            }
+        }
+        return auth;
     }
 
     @Override

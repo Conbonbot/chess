@@ -2,18 +2,19 @@ package dataaccess;
 
 import java.util.ArrayList;
 
+import exception.ResponseException;
 import model.UserData;
 
 public class MemoryUserDAO implements UserDAO{
     final private ArrayList<UserData> userList = new ArrayList<>();
 
     @Override
-    public UserData addUserData(UserData userData) throws DataAccessException{
+    public UserData addUserData(UserData userData) throws ResponseException{
         if(getUser(userData.username()) == null){
             userList.add(userData);
             return userData;
         }
-        throw new DataAccessException("Error: already taken");
+        throw new ResponseException(403, "Error: already taken");
     }
 
     @Override
