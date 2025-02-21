@@ -48,7 +48,6 @@ public class MySqlUserDAO implements UserDAO{
         try {
             var conn = DatabaseManager.getConnection();
             for(var statment : createTable){
-                
                 try(var sanatized = conn.prepareStatement(statment)){
                     sanatized.executeUpdate();
                 }

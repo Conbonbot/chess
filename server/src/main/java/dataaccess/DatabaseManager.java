@@ -38,13 +38,7 @@ public class DatabaseManager {
 
     private final String[] createStatements = {
         """
-        CREATE TABLE IF NOT EXISTS game (
-          'id' int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-          'whiteUsername' varchar(256),
-          'blackUsername' varchar(256),
-          'gameName' varchar(256),
-          'game' blob
-        )
+        
         CREATE TABLE IF NOT EXISTS auth (
           'authToken' varchar(256) NOT NULL,
           'username' varchar(256) NOT NULL
