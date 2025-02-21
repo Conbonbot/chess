@@ -4,6 +4,7 @@ import model.AuthData;
 
 public class MySqlAuthDAO implements AuthDAO{
 
+
     @Override
     public AuthData addAuthData(AuthData authData) {
         // TODO Auto-generated method stub

@@ -2,7 +2,12 @@ package dataaccess;
 
 import model.UserData;
 
+
 public class MySqlUserDAO implements UserDAO{
+
+    public MySqlUserDAO(){
+        configureDatabase();
+    }
 
     @Override
     public UserData addUserData(UserData userData) throws DataAccessException {
@@ -21,5 +26,15 @@ public class MySqlUserDAO implements UserDAO{
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'clear'");
     }
+
+    private void configureDatabase(){
+        try{
+            DatabaseManager.createDatabase();
+        }
+        catch(DataAccessException e){
+            
+        }
+    }
+
     
 }
