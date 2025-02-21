@@ -36,16 +36,7 @@ public class DatabaseManager {
     }
 
 
-    private final String[] createStatements = {
-        """
-        
-        CREATE TABLE IF NOT EXISTS auth (
-          'authToken' varchar(256) NOT NULL,
-          'username' varchar(256) NOT NULL
-          PRIMARY KEY ('USERNAME')
-        )
-        """
-    };
+
 
     /**
      * Creates the database if it does not already exist.
