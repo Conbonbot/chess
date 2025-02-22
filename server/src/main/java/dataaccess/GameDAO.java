@@ -10,5 +10,5 @@ public interface GameDAO {
     GameData getGame(int gameID) throws ResponseException;
     ArrayList<GameData> listGames() throws ResponseException;
     void updateGame(int gameID, String whiteUsername, String blackUsername) throws ResponseException;
-    void clear();
+    void clear() throws ResponseException;
 }

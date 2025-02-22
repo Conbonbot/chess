@@ -1,8 +1,13 @@
 package dataaccess;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+import com.google.gson.Gson;
+
+import chess.ChessGame;
 import exception.ResponseException;
 import model.GameData;
 
@@ -13,33 +18,93 @@ public class MySqlGameDAO implements GameDAO{
     }
 
     @Override
-    public int createGame(String gameName) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createGame'");
+    public int createGame(String gameName) throws ResponseException{
+        var conn = DatabaseManager.getConnection();
+        var statement = "INSERT INTO game (gameName, game) VALUES (?, ?);";
+        try(var insert = conn.prepareStatement(statement, PreparedStatement.RETURN_GENERATED_KEYS)){
+            insert.setString(1, gameName);
+            var json = new Gson().toJson(new ChessGame());
+            insert.setString(2, json);
+            insert.executeUpdate();
+            ResultSet rs = insert.getGeneratedKeys();
+            if(rs.next()) {
+                return rs.getInt(1);
+            }
+            throw new ResponseException(500, "Error: Issue with game creation");
+        }
+        catch(SQLException ex){
+            throw new ResponseException(500, ex.toString());
+        }
     }
 
     @Override
-    public GameData getGame(int gameID) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getGame'");
+    public GameData getGame(int gameID) throws ResponseException{
+        var conn = DatabaseManager.getConnection();
+        var statement = "SELECT * FROM game WHERE id = " + gameID;
+        try(var query = conn.prepareStatement(statement)){
+            ResultSet rs = query.executeQuery();
+            if(rs.next()){
+                return new GameData(rs.getInt(1), 
+                    rs.getString("whiteUsername"), 
+                    rs.getString("blackUsername"), 
+                    rs.getString("gameName"),
+                    new Gson().fromJson(rs.getString("game"), ChessGame.class));
+            }
+            return null;
+
+        }
+        catch(SQLException ex){
+            throw new ResponseException(500, ex.toString());
+        }
     }
 
     @Override
-    public ArrayList<GameData> listGames() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listGames'");
+    public ArrayList<GameData> listGames() throws ResponseException{
+        var conn = DatabaseManager.getConnection();
+        var statement = "SELECT * FROM game";
+        ArrayList<GameData> list = new ArrayList<>();
+        try(var query = conn.prepareStatement(statement)){
+            ResultSet rs = query.executeQuery();
+            while(rs.next()){
+                list.add(new GameData(rs.getInt(1), 
+                    rs.getString("whiteUsername"), 
+                    rs.getString("blackUsername"), 
+                    rs.getString("gameName"),
+                    new Gson().fromJson(rs.getString("game"), ChessGame.class)));
+            }
+            return list;
+        }
+        catch(SQLException ex){
+            throw new ResponseException(500, ex.toString());
+        }
     }
 
     @Override
-    public void updateGame(int gameID, String whiteUsername, String blackUsername) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'updateGame'");
+    public void updateGame(int gameID, String whiteUsername, String blackUsername) throws ResponseException{
+        GameData game = getGame(gameID);
+        var conn = DatabaseManager.getConnection();
+        var statement = "UPDATE game SET whiteUsername = '" + whiteUsername + "' WHERE id = " + game.gameID();
+        if(blackUsername != null){
+            statement = "UPDATE game SET blackUsername = '" + whiteUsername + "' WHERE id = " + game.gameID();
+        }
+        try(var update = conn.prepareStatement(statement)){
+            update.executeUpdate();
+        }
+        catch(SQLException ex){
+            throw new ResponseException(500, ex.toString());
+        }
     }
 
     @Override
-    public void clear() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'clear'");
+    public void clear() throws ResponseException{
+        var conn = DatabaseManager.getConnection();
+        var statement = "DELETE FROM game";
+        try(var delete = conn.prepareStatement(statement)){
+            delete.executeUpdate();
+        }
+        catch(SQLException ex){
+            throw new ResponseException(500, "Error: bad database request");
+        }
     }
 
     private final String[] createTable = {
@@ -48,8 +113,8 @@ public class MySqlGameDAO implements GameDAO{
           `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
           `whiteUsername` varchar(256),
           `blackUsername` varchar(256),
-          `gameName` varchar(256),
-          `game` blob
+          `gameName` varchar(256) NOT NULL,
+          `game` longtext NOT NULL
         )
         """
     };
@@ -62,8 +127,7 @@ public class MySqlGameDAO implements GameDAO{
                 sanatized.executeUpdate();
             }
             catch(SQLException ex){
-                // TODO: change response code
-                throw new ResponseException(666, "Something happened");
+                throw new ResponseException(500, ex.toString());
             }
         }
     }

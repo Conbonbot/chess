@@ -22,14 +22,14 @@ public class MySqlAuthDAO implements AuthDAO{
             return authData;
         }
         catch(SQLException ex){
-            throw new ResponseException(500, "Error: internal server error");
+            throw new ResponseException(500, ex.toString());
         }
     }
 
     @Override
     public AuthData getAuth(String authToken) throws ResponseException{
         var conn = DatabaseManager.getConnection();
-        var statement = "SELECT * FROM auth WHERE authToken = " + authToken;
+        var statement = "SELECT * FROM auth WHERE authToken = '" + authToken + "';";
         try(var query = conn.prepareStatement(statement)){
             ResultSet rs = query.executeQuery();
             while(rs.next()){
@@ -40,20 +40,19 @@ public class MySqlAuthDAO implements AuthDAO{
             throw new ResponseException(401, "Error: unauthorized");
         }
         catch(SQLException ex){
-            throw new ResponseException(500, "Error: Internal server error");
+            throw new ResponseException(500, ex.toString());
         }
     }
 
     @Override
     public void removeAuthData(AuthData authData) throws ResponseException{
-        getAuth(authData.authToken());
         var conn = DatabaseManager.getConnection();
-        var statement = "DELETE FROM auth WHERE authToken = " + authData.authToken();
+        var statement = "DELETE FROM auth WHERE authToken = '" + authData.authToken() + "';";
         try(var delete = conn.prepareStatement(statement)){
             delete.executeUpdate();
         }
         catch(SQLException ex){
-            throw new ResponseException(500, "Error: internal server error");
+            throw new ResponseException(500, ex.toString());
         }
     }
 
@@ -65,7 +64,7 @@ public class MySqlAuthDAO implements AuthDAO{
             delete.executeUpdate();
         }
         catch(SQLException ex){
-            throw new ResponseException(500, "Error: bad database request");
+            throw new ResponseException(500, ex.toString());
         }
     }
 
@@ -87,8 +86,7 @@ public class MySqlAuthDAO implements AuthDAO{
                 sanatized.executeUpdate();
             }
             catch(SQLException ex){
-                // TODO: change response code
-                throw new ResponseException(666, "Something happened");
+                throw new ResponseException(500, ex.toString());
             }
         }
     }

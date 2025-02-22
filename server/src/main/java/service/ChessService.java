@@ -43,10 +43,8 @@ public class ChessService {
     }
 
     public Result.CreateGame createGame(String authToken, Request.CreateGame createGameRequest) throws ResponseException{
-        if(checkAuth(authToken)){
-            return new Result.CreateGame(gameAccess.createGame(createGameRequest.gameName()));
-        }
-        throw new ResponseException(400, "Error: bad request");
+        checkAuth(authToken);
+        return new Result.CreateGame(gameAccess.createGame(createGameRequest.gameName()));
     }
 
     public void joinGame(String authToken, Request.JoinGame joinGameRequest) throws ResponseException{
