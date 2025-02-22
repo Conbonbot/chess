@@ -8,4 +8,5 @@ public interface AuthDAO {
     AuthData getAuth(String authToken) throws ResponseException;
     void removeAuthData(AuthData authData) throws ResponseException;
     void clear() throws ResponseException;
+    boolean verifyUser(String password, String providedClearTextPassword);
 }

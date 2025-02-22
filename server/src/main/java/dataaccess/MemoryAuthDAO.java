@@ -34,4 +34,9 @@ public class MemoryAuthDAO implements AuthDAO {
     public void clear(){
         authList.clear();
     }
+
+    @Override
+    public boolean verifyUser(String password, String providedClearTextPassword) {
+        return password.equals(providedClearTextPassword);
+    }
 }

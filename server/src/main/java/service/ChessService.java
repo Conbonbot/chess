@@ -1,8 +1,6 @@
 package service;
 import java.util.UUID;
 
-import org.mindrot.jbcrypt.BCrypt;
-
 import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
 import dataaccess.UserDAO;
@@ -90,7 +88,7 @@ public class ChessService {
     public Result.Login login(Request.Login loginRequest) throws ResponseException{
         UserData user = userAccess.getUser(loginRequest.username());
         String password = loginRequest.password();
-        if(verifyUser(user.password(), password)){
+        if(authAccess.verifyUser(user.password(), password)){
             String token = generateToken();
             authAccess.addAuthData(new AuthData(token, user.username()));
             return new Result.Login(user.username(), token);
@@ -112,11 +110,7 @@ public class ChessService {
         return (authAccess.getAuth(authToken) != null);
     }
 
-    boolean verifyUser(String hash, String providedClearTextPassword) {
-        // read the previously hashed password from the database
-
-        return BCrypt.checkpw(providedClearTextPassword, hash);
-    }
+    
 
 
 }

@@ -19,6 +19,9 @@ public class MySqlGameDAO implements GameDAO{
 
     @Override
     public int createGame(String gameName) throws ResponseException{
+        if(gameName.isEmpty()){
+            throw new ResponseException(400, "Error: bad request");
+        }
         var conn = DatabaseManager.getConnection();
         var statement = "INSERT INTO game (gameName, game) VALUES (?, ?);";
         try(var insert = conn.prepareStatement(statement, PreparedStatement.RETURN_GENERATED_KEYS)){
@@ -85,7 +88,7 @@ public class MySqlGameDAO implements GameDAO{
         var conn = DatabaseManager.getConnection();
         var statement = "UPDATE game SET whiteUsername = '" + whiteUsername + "' WHERE id = " + game.gameID();
         if(blackUsername != null){
-            statement = "UPDATE game SET blackUsername = '" + whiteUsername + "' WHERE id = " + game.gameID();
+            statement = "UPDATE game SET blackUsername = '" + blackUsername + "' WHERE id = " + game.gameID();
         }
         try(var update = conn.prepareStatement(statement)){
             update.executeUpdate();
@@ -97,6 +100,7 @@ public class MySqlGameDAO implements GameDAO{
 
     @Override
     public void clear() throws ResponseException{
+        configureDatabase();
         var conn = DatabaseManager.getConnection();
         var statement = "DELETE FROM game";
         try(var delete = conn.prepareStatement(statement)){

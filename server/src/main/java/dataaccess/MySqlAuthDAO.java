@@ -3,6 +3,8 @@ package dataaccess;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.mindrot.jbcrypt.BCrypt;
+
 import exception.ResponseException;
 import model.AuthData;
 
@@ -58,6 +60,7 @@ public class MySqlAuthDAO implements AuthDAO{
 
     @Override
     public void clear() throws ResponseException{
+        configureDatabase();
         var conn = DatabaseManager.getConnection();
         var statement = "DELETE FROM auth";
         try(var delete = conn.prepareStatement(statement)){
@@ -89,6 +92,12 @@ public class MySqlAuthDAO implements AuthDAO{
                 throw new ResponseException(500, ex.toString());
             }
         }
+    }
+
+    @Override
+    public boolean verifyUser(String hash, String providedClearTextPassword) {
+        // read the previously hashed password from the database
+        return BCrypt.checkpw(providedClearTextPassword, hash);
     }
 
    

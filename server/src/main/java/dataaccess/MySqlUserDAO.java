@@ -24,7 +24,7 @@ public class MySqlUserDAO implements UserDAO{
             while(rs.next()){
                 String username = rs.getString("username");
                 if(userData.username().equals(username)){
-                    throw new ResponseException(401, "Error: already taken");
+                    throw new ResponseException(403, "Error: already taken");
                 }
             }
             // Insert user
@@ -64,6 +64,7 @@ public class MySqlUserDAO implements UserDAO{
 
     @Override
     public void clear() throws ResponseException{
+        configureDatabase();
         var conn = DatabaseManager.getConnection();
         var statement = "DELETE FROM user";
         try(var delete = conn.prepareStatement(statement)){
