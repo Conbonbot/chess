@@ -45,7 +45,7 @@ public class MySqlUserDAO implements UserDAO{
     @Override
     public UserData getUser(String username) throws ResponseException{
         var conn = DatabaseManager.getConnection();
-        var statement = "SELECT * FROM user WHERE username = " + username;
+        var statement = "SELECT * FROM user WHERE username = '" + username + "'";
         try(var query = conn.prepareStatement(statement)){
             ResultSet rs = query.executeQuery();
             while(rs.next()){
