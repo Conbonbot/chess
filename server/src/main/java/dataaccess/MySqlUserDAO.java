@@ -75,7 +75,7 @@ public class MySqlUserDAO implements UserDAO{
         }
     }
 
-    private final String[] createTable = {
+    private final String[] createUserTable = {
         """
         CREATE TABLE IF NOT EXISTS user (
           `username` varchar(256) NOT NULL,
@@ -89,9 +89,9 @@ public class MySqlUserDAO implements UserDAO{
     private void configureDatabase() throws ResponseException{
         DatabaseManager.createDatabase();
         var conn = DatabaseManager.getConnection();
-        for(var statment : createTable){
-            try(var sanatized = conn.prepareStatement(statment)){
-                sanatized.executeUpdate();
+        for(var userStatement : createUserTable){
+            try(var userSanatized = conn.prepareStatement(userStatement)){
+                userSanatized.executeUpdate();
             }
             catch(SQLException ex){
                 throw new ResponseException(500, "Internal server error");

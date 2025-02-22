@@ -72,7 +72,7 @@ public class MySqlAuthDAO implements AuthDAO{
     }
 
 
-    private final String[] createTable = {
+    private final String[] createAuthTable = {
         """
         CREATE TABLE IF NOT EXISTS auth (
           `authToken` varchar(256) NOT NULL PRIMARY KEY,
@@ -84,9 +84,9 @@ public class MySqlAuthDAO implements AuthDAO{
     private void configureDatabase() throws ResponseException{
         DatabaseManager.createDatabase();
         var conn = DatabaseManager.getConnection();
-        for(var statment : createTable){
-            try(var sanatized = conn.prepareStatement(statment)){
-                sanatized.executeUpdate();
+        for(var authStatement : createAuthTable){
+            try(var authSanatized = conn.prepareStatement(authStatement)){
+                authSanatized.executeUpdate();
             }
             catch(SQLException ex){
                 throw new ResponseException(500, ex.toString());

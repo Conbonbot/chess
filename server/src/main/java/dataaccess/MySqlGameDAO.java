@@ -111,7 +111,7 @@ public class MySqlGameDAO implements GameDAO{
         }
     }
 
-    private final String[] createTable = {
+    private final String[] createGameTable = {
         """
         CREATE TABLE IF NOT EXISTS game (
           `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -126,9 +126,9 @@ public class MySqlGameDAO implements GameDAO{
     private void configureDatabase() throws ResponseException{
         DatabaseManager.createDatabase();
         var conn = DatabaseManager.getConnection();
-        for(var statment : createTable){
-            try(var sanatized = conn.prepareStatement(statment)){
-                sanatized.executeUpdate();
+        for(var gameStatement : createGameTable){
+            try(var gameSanatized = conn.prepareStatement(gameStatement)){
+                gameSanatized.executeUpdate();
             }
             catch(SQLException ex){
                 throw new ResponseException(500, ex.toString());
