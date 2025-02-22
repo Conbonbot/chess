@@ -12,7 +12,7 @@ import model.UserData;
 public class MySqlUserDAO implements UserDAO{
 
     public MySqlUserDAO() throws ResponseException{
-        configureDatabase();
+        configureUserDatabase();
     }
 
     @Override
@@ -64,7 +64,7 @@ public class MySqlUserDAO implements UserDAO{
 
     @Override
     public void clear() throws ResponseException{
-        configureDatabase();
+        configureUserDatabase();
         var conn = DatabaseManager.getConnection();
         var statement = "DELETE FROM user";
         try(var delete = conn.prepareStatement(statement)){
@@ -86,7 +86,7 @@ public class MySqlUserDAO implements UserDAO{
         """
     };
 
-    private void configureDatabase() throws ResponseException{
+    private void configureUserDatabase() throws ResponseException{
         DatabaseManager.createDatabase();
         var conn = DatabaseManager.getConnection();
         for(var userStatement : createUserTable){

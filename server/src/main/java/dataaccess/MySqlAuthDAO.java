@@ -11,7 +11,7 @@ import model.AuthData;
 public class MySqlAuthDAO implements AuthDAO{
 
     public MySqlAuthDAO() throws ResponseException{
-        configureDatabase();
+        configureAuthDatabase();
     }
 
     @Override
@@ -60,7 +60,7 @@ public class MySqlAuthDAO implements AuthDAO{
 
     @Override
     public void clear() throws ResponseException{
-        configureDatabase();
+        configureAuthDatabase();
         var conn = DatabaseManager.getConnection();
         var statement = "DELETE FROM auth";
         try(var delete = conn.prepareStatement(statement)){
@@ -81,7 +81,7 @@ public class MySqlAuthDAO implements AuthDAO{
         """
     };
 
-    private void configureDatabase() throws ResponseException{
+    private void configureAuthDatabase() throws ResponseException{
         DatabaseManager.createDatabase();
         var conn = DatabaseManager.getConnection();
         for(var authStatement : createAuthTable){

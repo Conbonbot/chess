@@ -14,7 +14,7 @@ import model.GameData;
 public class MySqlGameDAO implements GameDAO{
 
     public MySqlGameDAO() throws ResponseException{
-        configureDatabase();
+        configureGameDatabase();
     }
 
     @Override
@@ -100,7 +100,7 @@ public class MySqlGameDAO implements GameDAO{
 
     @Override
     public void clear() throws ResponseException{
-        configureDatabase();
+        configureGameDatabase();
         var conn = DatabaseManager.getConnection();
         var statement = "DELETE FROM game";
         try(var delete = conn.prepareStatement(statement)){
@@ -123,7 +123,7 @@ public class MySqlGameDAO implements GameDAO{
         """
     };
 
-    private void configureDatabase() throws ResponseException{
+    private void configureGameDatabase() throws ResponseException{
         DatabaseManager.createDatabase();
         var conn = DatabaseManager.getConnection();
         for(var gameStatement : createGameTable){
