@@ -7,6 +7,9 @@ import dataaccess.GameDAO;
 import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryGameDAO;
 import dataaccess.MemoryUserDAO;
+import dataaccess.MySqlAuthDAO;
+import dataaccess.MySqlGameDAO;
+import dataaccess.MySqlUserDAO;
 import dataaccess.UserDAO;
 import exception.ResponseException;
 import requests.Request;
@@ -27,13 +30,6 @@ public class Server {
         this.chessService = chessService;
     }
 
-    // Default constructor uses memory instead of MySQL
-    public Server(){
-        AuthDAO authAccess = new MemoryAuthDAO();
-        GameDAO gameAccess = new MemoryGameDAO();
-        UserDAO userAccess = new MemoryUserDAO();
-        this.chessService = new ChessService(authAccess, gameAccess, userAccess);
-    }
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);

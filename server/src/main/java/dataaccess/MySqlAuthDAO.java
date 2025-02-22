@@ -1,6 +1,7 @@
 package dataaccess;
 
 import java.sql.SQLException;
+import java.util.UUID;
 
 import exception.ResponseException;
 import model.AuthData;
@@ -12,9 +13,21 @@ public class MySqlAuthDAO implements AuthDAO{
     }
 
     @Override
-    public AuthData addAuthData(AuthData authData) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'addAuthData'");
+    public AuthData addAuthData(AuthData authData){
+        try(var conn = DatabaseManager.getConnection()){
+            var statement = "INSERT INTO auth (authToken, username) VALUES ('";
+            statement += authData.authToken() + "','" + authData.username() + "');";
+            try(var insert = conn.prepareStatement(statement)){
+                insert.executeUpdate();
+            }
+        }
+        catch(ResponseException ex){
+            System.out.println("help");
+        }
+        catch(SQLException ex){
+            System.out.println("uh oh");
+        }
+        return authData;
     }
 
     @Override
@@ -37,8 +50,7 @@ public class MySqlAuthDAO implements AuthDAO{
 
     @Override
     public String generateAuth() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'generateAuth'");
+        return UUID.randomUUID().toString();
     }
 
 

@@ -1,5 +1,6 @@
 package dataaccess;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.mindrot.jbcrypt.BCrypt;
@@ -16,46 +17,29 @@ public class MySqlUserDAO implements UserDAO{
 
     @Override
     public UserData addUserData(UserData userData) throws ResponseException {
-        /*
-        try(var conn = DatabaseManager.getConnection()){
-            var statement = "SELECT username FROM user WHERE username=" + "'" + userData.username() + "';";
-            try(var sanatizedInput = conn.prepareStatement(statement)){
-                ResultSet rs = sanatizedInput.executeQuery();
-                while(rs.next()){
-                    String username = rs.getString("username");
-                    if(userData.username().equals(username)){
-                        throw new ResponseException(401, "Error: already taken");
-                    }
+        var conn = DatabaseManager.getConnection();
+        var statement = "SELECT username FROM user WHERE username=" + "'" + userData.username() + "';";
+        try(var sanatizedInput = conn.prepareStatement(statement)){
+            ResultSet rs = sanatizedInput.executeQuery();
+            while(rs.next()){
+                String username = rs.getString("username");
+                if(userData.username().equals(username)){
+                    throw new ResponseException(401, "Error: already taken");
                 }
             }
             // Insert user
-            insertUser(userData);
-        }
-        catch(SQLException ex){
-
-        }
-         */
-        return userData;
-    }
-
-    private void insertUser(UserData userData){
-        String hashedPassword = BCrypt.hashpw(userData.password(), BCrypt.gensalt());
-        /*
-
-        try(var conn = DatabaseManager.getConnection()){
-            var statement = "INSERT INTO user (username, password, email) VALUES ('";
-            statement += userData.username() + "','" + hashedPassword + "','" + userData.email() + "');";
-            try(var sanatizedInput = conn.prepareStatement(statement)){
-                sanatizedInput.executeUpdate();
+            String hashedPassword = BCrypt.hashpw(userData.password(), BCrypt.gensalt());
+            var insert = "INSERT INTO user (username, password, email) VALUES ('";
+            insert += userData.username() + "','" + hashedPassword + "','" + userData.email() + "');";
+            try(var insertUser = conn.prepareStatement(insert)){
+                insertUser.executeUpdate();
             }
-        }
-        catch(DataAccessException ex){
-            System.out.println(ex);
+            return userData;
+
         }
         catch(SQLException ex){
-            System.out.println(ex);
+            throw new ResponseException(400, "Error: bad request");
         }
-             */
     }
 
     @Override
