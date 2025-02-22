@@ -1,7 +1,7 @@
 package dataaccess;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.UUID;
 
 import exception.ResponseException;
 import model.AuthData;
@@ -13,52 +13,68 @@ public class MySqlAuthDAO implements AuthDAO{
     }
 
     @Override
-    public AuthData addAuthData(AuthData authData){
-        try(var conn = DatabaseManager.getConnection()){
-            var statement = "INSERT INTO auth (authToken, username) VALUES ('";
-            statement += authData.authToken() + "','" + authData.username() + "');";
-            try(var insert = conn.prepareStatement(statement)){
-                insert.executeUpdate();
-            }
-        }
-        catch(ResponseException ex){
-            System.out.println("help");
+    public AuthData addAuthData(AuthData authData) throws ResponseException{
+        var conn = DatabaseManager.getConnection();
+        var statement = "INSERT INTO auth (authToken, username) VALUES ('";
+        statement += authData.authToken() + "','" + authData.username() + "');";
+        try(var insert = conn.prepareStatement(statement)){
+            insert.executeUpdate();
+            return authData;
         }
         catch(SQLException ex){
-            System.out.println("uh oh");
+            throw new ResponseException(500, "Error: internal server error");
         }
-        return authData;
     }
 
     @Override
-    public AuthData getAuth(String authToken) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getAuth'");
+    public AuthData getAuth(String authToken) throws ResponseException{
+        var conn = DatabaseManager.getConnection();
+        var statement = "SELECT * FROM auth WHERE authToken = " + authToken;
+        try(var query = conn.prepareStatement(statement)){
+            ResultSet rs = query.executeQuery();
+            while(rs.next()){
+                if(authToken.equals(rs.getString("authToken"))){
+                    return new AuthData(authToken, rs.getString("username"));
+                }
+            }
+            throw new ResponseException(401, "Error: unauthorized");
+        }
+        catch(SQLException ex){
+            throw new ResponseException(500, "Error: Internal server error");
+        }
     }
 
     @Override
-    public void removeAuthData(AuthData authData) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'removeAuthData'");
+    public void removeAuthData(AuthData authData) throws ResponseException{
+        getAuth(authData.authToken());
+        var conn = DatabaseManager.getConnection();
+        var statement = "DELETE FROM auth WHERE authToken = " + authData.authToken();
+        try(var delete = conn.prepareStatement(statement)){
+            delete.executeUpdate();
+        }
+        catch(SQLException ex){
+            throw new ResponseException(500, "Error: internal server error");
+        }
     }
 
     @Override
-    public void clear() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'clear'");
-    }
-
-    @Override
-    public String generateAuth() {
-        return UUID.randomUUID().toString();
+    public void clear() throws ResponseException{
+        var conn = DatabaseManager.getConnection();
+        var statement = "DELETE FROM auth";
+        try(var delete = conn.prepareStatement(statement)){
+            delete.executeUpdate();
+        }
+        catch(SQLException ex){
+            throw new ResponseException(500, "Error: bad database request");
+        }
     }
 
 
     private final String[] createTable = {
         """
         CREATE TABLE IF NOT EXISTS auth (
-          `authToken` varchar(256) NOT NULL,
-          `username` varchar(256) NOT NULL PRIMARY KEY
+          `authToken` varchar(256) NOT NULL PRIMARY KEY,
+          `username` varchar(256) NOT NULL
         )
         """
     };

@@ -84,7 +84,7 @@ public class ChessService {
         String username = registerRequest.username();
         UserData user = new UserData(username, registerRequest.password(), registerRequest.email());
         userAccess.addUserData(user);
-        String token = authAccess.generateAuth();
+        String token = generateToken();
         authAccess.addAuthData(new AuthData(token, username));
         return new Result.Register(username, token);
     }

@@ -48,7 +48,6 @@ public class MySqlUserDAO implements UserDAO{
         var statement = "SELECT * FROM user WHERE username = " + username;
         try(var query = conn.prepareStatement(statement)){
             ResultSet rs = query.executeQuery();
-            // do stuff
             while(rs.next()){
                 String dbUsername = rs.getString("username");
                 if(username.equals(dbUsername)){
@@ -64,9 +63,15 @@ public class MySqlUserDAO implements UserDAO{
     }
 
     @Override
-    public void clear() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'clear'");
+    public void clear() throws ResponseException{
+        var conn = DatabaseManager.getConnection();
+        var statement = "DELETE FROM user";
+        try(var delete = conn.prepareStatement(statement)){
+            delete.executeUpdate();
+        }
+        catch(SQLException ex){
+            throw new ResponseException(500, "Error: bad database request");
+        }
     }
 
     private final String[] createTable = {
@@ -88,8 +93,7 @@ public class MySqlUserDAO implements UserDAO{
                 sanatized.executeUpdate();
             }
             catch(SQLException ex){
-                // TODO: change response code
-                throw new ResponseException(666, "Something happened");
+                throw new ResponseException(500, "Internal server error");
             }
         }
     }

@@ -2,15 +2,12 @@ package server;
 
 import com.google.gson.Gson;
 
-import dataaccess.AuthDAO;
-import dataaccess.GameDAO;
 import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryGameDAO;
 import dataaccess.MemoryUserDAO;
 import dataaccess.MySqlAuthDAO;
 import dataaccess.MySqlGameDAO;
 import dataaccess.MySqlUserDAO;
-import dataaccess.UserDAO;
 import exception.ResponseException;
 import requests.Request;
 import results.Result;
@@ -25,6 +22,17 @@ import static spark.Spark.put;
 
 public class Server {
     private final ChessService chessService;
+
+    public Server(){
+        ChessService serv;
+        try{
+            serv = new ChessService(new MySqlAuthDAO(), new MySqlGameDAO(), new MySqlUserDAO());
+        }
+        catch(ResponseException ex){
+            serv = new ChessService(new MemoryAuthDAO(), new MemoryGameDAO(), new MemoryUserDAO());
+        }
+        chessService = serv;
+    }
 
     public Server(ChessService chessService){
         this.chessService = chessService;
