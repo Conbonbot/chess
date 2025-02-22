@@ -1,6 +1,5 @@
 import chess.ChessGame;
 import chess.ChessPiece;
-import dataaccess.DataAccessException;
 import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryGameDAO;
 import dataaccess.MemoryUserDAO;
@@ -8,7 +7,6 @@ import dataaccess.MySqlAuthDAO;
 import dataaccess.MySqlGameDAO;
 import dataaccess.MySqlUserDAO;
 import exception.ResponseException;
-import model.UserData;
 import server.Server;
 import service.ChessService;
 

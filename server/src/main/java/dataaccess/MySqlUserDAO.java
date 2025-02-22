@@ -43,9 +43,24 @@ public class MySqlUserDAO implements UserDAO{
     }
 
     @Override
-    public UserData getUser(String username) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getUser'");
+    public UserData getUser(String username) throws ResponseException{
+        var conn = DatabaseManager.getConnection();
+        var statement = "SELECT * FROM user WHERE username = " + username;
+        try(var query = conn.prepareStatement(statement)){
+            ResultSet rs = query.executeQuery();
+            // do stuff
+            while(rs.next()){
+                String dbUsername = rs.getString("username");
+                if(username.equals(dbUsername)){
+                    return new UserData(username, rs.getString("password"), rs.getString("email"));
+                }
+            }
+
+        }
+        catch(SQLException ex){
+            throw new ResponseException(400, "Error: bad request");
+        }
+        throw new ResponseException(401, "Error: unauthorized");
     }
 
     @Override
