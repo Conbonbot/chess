@@ -7,7 +7,7 @@ public class EscapeSequences {
     private static final String UNICODE_ESCAPE = "\u001b";
     private static final String ANSI_ESCAPE = "\033";
 
-    private static final String RESET_COLORS = "\033[0m";
+    public static final String FULL_COLOR_RESET = "\033[0m";
 
     public static final String ERASE_SCREEN = UNICODE_ESCAPE + "[H" + UNICODE_ESCAPE + "[2J";
     public static final String ERASE_LINE = UNICODE_ESCAPE + "[2K";
