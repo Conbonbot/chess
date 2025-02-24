@@ -72,11 +72,17 @@ public class Console {
     }
 
     private static void exceptionHandler(IOException ex){
-        switch (Integer.parseInt(ex.getMessage())) {
-            case 400 -> System.out.printf("%sError: bad request%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
-            case 401 -> System.out.printf("%sYou are unauthorized.%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
-            case 403 -> System.out.printf("%sThis has already been taken.%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
-            default -> System.out.printf("%sAn error has occured. Try again.%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
+        try{
+            switch (Integer.parseInt(ex.getMessage())) {
+                case 400 -> System.out.printf("%sError: bad request%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
+                case 401 -> System.out.printf("%sYou are unauthorized.%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
+                case 403 -> System.out.printf("%sThis has already been taken.%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
+                case 500 -> System.out.printf("%sInternal service error.%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
+                default -> System.out.printf("%sAn error has occured. Try again.%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
+            }
+        }
+        catch(NumberFormatException error){
+            System.out.printf("Below is the errror%n%s%n", error.toString());
         }
     }
 
@@ -94,7 +100,7 @@ public class Console {
             System.out.printf("\t%screate <NAME> %s- create a game%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-            System.out.printf("\t%slist <NAME> %s- list current games%s%n",
+            System.out.printf("\t%slist %s- list current games%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
             System.out.printf("\t%sjoin <ID> [%sWHITE%s|%sBLACK%s] %s- join a game%s%n",
@@ -182,40 +188,66 @@ public class Console {
         }
     }
 
-    private static void createGame(){
+    private static void createGame() throws Exception{
         if(loggedIn){
-
+            if(line.split(" ").length == 2){
+                String gameName = line.split(" ")[1];
+                var body = Map.of("gameName", gameName);
+                HttpURLConnection http = sendRequest("http://localhost:3000/game", "POST", new Gson().toJson(body), authToken);
+                receiveResponse(http);
+                System.out.printf("The game ('%s' has been created!%n", gameName);
+            }
+            else{
+                System.out.printf("Format is incorrect. It is >>> game <NAME>%n");
+            }
         }
         else{
-            System.out.printf("Hold on partner%n");
+            System.out.printf("You have to log in first%n");
         }
 
     }
 
-    private static void listGames(){
+    private static void listGames() throws Exception{
         if(loggedIn){
-
+            HttpURLConnection http = sendRequest("http://localhost:3000/game", "GET", "", authToken);
+            var games = receiveResponse(http);
+            System.out.printf("Below are the current games:%n%s%n", games);
         }
         else{
-            System.out.printf("Hold on partner%n");
+            System.out.printf("You have to log in first%n");
         }
     }
 
-    private static void joinGame(){
+    private static void joinGame() throws Exception{
         if(loggedIn){
-
+            var values = line.split(" ");
+            if(values.length == 3){
+                var body = Map.of("playerColor", values[2], "gameID", values[1]);
+                HttpURLConnection http = sendRequest("http://localhost:3000/game", "PUT", new Gson().toJson(body), authToken);
+                receiveResponse(http);
+                System.out.printf("Congrats on joining a game%n");
+            }
+            else{
+                System.out.printf("Format is incorrect. It is >>> join <ID> [WHITE|BLACK]%n");
+            }
         }
         else{
-            System.out.printf("Hold on partner%n");
+            System.out.printf("You have to log in first%n");
         }
     }
 
-    private static void observeGame(){
+    private static void observeGame() throws Exception{
         if(loggedIn){
-
+            var values = line.split(" ");
+            if(values.length == 2){
+                System.out.printf("Hold on%n");
+            }
+            else{
+                System.out.printf("Format is incorrect. It is >>> observe <ID>%n");
+            }
         }
         else{
-            System.out.printf("Hold on partner%n");
+            System.out.printf("You have to log in first%n");
         }
     }
 
