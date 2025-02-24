@@ -81,7 +81,8 @@ public class Console {
     }
 
     private static void exceptionHandler(Exception ex){
-
+        System.out.println("An error has occured");
+        System.out.println(ex.toString());
     }
 
 
@@ -156,8 +157,8 @@ public class Console {
             var values = line.split(" ");
             var body = Map.of("username", values[1], "password", values[2], "email", values[3]);
             HttpURLConnection http = sendRequest("http://localhost:3000/user", "POST", new Gson().toJson(body));
-            receiveResponse(http);
-
+            String response = receiveResponse(http).toString();
+            authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
             loggedIn = true;
             status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
         }
@@ -171,9 +172,10 @@ public class Console {
     private static void logout() throws Exception{
         if(loggedIn){
             // make request
-
+            HttpURLConnection http = sendRequest("http://localhost:3000/session", "DELETE", "", authToken);
+            receiveResponse(http);
             loggedIn = false;
-            status = "[LOGGED_OUT]";
+            status = EscapeSequences.SET_TEXT_COLOR_RED + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
         }
         else{
             System.out.printf("You have to log in first%n");
@@ -226,6 +228,19 @@ public class Console {
         System.out.printf("= Request =========\n[%s] %s\n\n%s\n\n", method, url, body);
         return http;
     }
+
+    private static HttpURLConnection sendRequest(String url, String method, String body, String authToken) throws URISyntaxException, IOException {
+        URI uri = new URI(url);
+        HttpURLConnection http = (HttpURLConnection) uri.toURL().openConnection();
+        http.setDoOutput(true);
+        http.addRequestProperty("Authorization", authToken);
+        http.setRequestMethod(method);
+        writeRequestBody(body, http);
+        http.connect();
+        System.out.printf("= Request =========\n[%s] %s\n\n%s\n\n", method, url, body);
+        return http;
+    }
+
 
     private static void writeRequestBody(String body, HttpURLConnection http) throws IOException {
         if (!body.isEmpty()) {
