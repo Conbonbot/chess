@@ -160,6 +160,7 @@ public class Console {
         authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
         loggedIn = true;
         status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
+        System.out.printf("Welcome back %s!%n", values[1]);
     }
 
     private static void register() throws Exception{
@@ -171,6 +172,7 @@ public class Console {
         authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
         loggedIn = true;
         status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
+        System.out.printf("Welcome to chess! use the command 'help' to show commands!%n");
     }
 
     // Postlogin
@@ -199,6 +201,12 @@ public class Console {
         HttpURLConnection http = sendRequest("http://localhost:3000/game", "GET", "", authToken);
         var games = receiveResponse(http);
         ArrayList<GameData> gamesList = gamesAsList(games);
+        if(gamesList.isEmpty()){
+            System.out.printf("There are currently no active games%nUse the command '%screate <NAME>%s' to start one!%n",
+                    EscapeSequences.SET_TEXT_COLOR_BLUE,
+                    EscapeSequences.FULL_COLOR_RESET);
+            return;
+        }
         System.out.printf("Below are the current games\n");
         for(int i = 0; i < gamesList.size(); i++){
             System.out.printf("ID: %d | game: %s | white: %s | black: %s\n", gamesList.get(i).gameID(), gamesList.get(i).gameName(),
@@ -218,13 +226,16 @@ public class Console {
             var body = Map.of("playerColor", values[2], "gameID", gameID);
             HttpURLConnection http = sendRequest("http://localhost:3000/game", "PUT", new Gson().toJson(body), authToken);
             receiveResponse(http);
-            System.out.printf("Congrats on joining a game%n");
-            
+            System.out.printf("Congrats on joining a game%nBelow is the board%n");
+            http = sendRequest("http://localhost:3000/game", "GET", "", authToken);
+            var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
+            GameData game = findGame(result, values[1]);
+            printBoard(game.game().getBoard(), values[2].equals("WHITE"));
+            System.out.printf("^ This is your side ^%n");
         }
         else{
             throw new Exception("type must be either 'WHITE' OR 'BLACK'");
         }
-        
     }
 
     private static void observeGame() throws Exception{
@@ -256,7 +267,6 @@ public class Console {
         http.connect();
         return http;
     }
-
 
     private static void writeRequestBody(String body, HttpURLConnection http) throws IOException {
         if (!body.isEmpty()) {

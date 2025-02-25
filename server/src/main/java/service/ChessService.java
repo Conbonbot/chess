@@ -6,6 +6,7 @@ import dataaccess.GameDAO;
 import dataaccess.UserDAO;
 import exception.ResponseException;
 import model.AuthData;
+import model.GameData;
 import model.UserData;
 import requests.Request;
 import results.Result;
@@ -50,9 +51,14 @@ public class ChessService {
             throw new ResponseException(400, "Error: bad request");
         }
         checkAuth(authToken);
+        GameData game = gameAccess.getGame(joinGameRequest.gameID());
+        String username = authAccess.getAuth(authToken).username();
         switch (joinGameRequest.playerColor()) {
             case "WHITE" -> {
-                if(gameAccess.getGame(joinGameRequest.gameID()) != null && gameAccess.getGame(joinGameRequest.gameID()).whiteUsername() == null){
+                if(game != null && game.whiteUsername() == null){
+                    if(game.blackUsername() != null && game.blackUsername().equals(username)){
+                        throw new ResponseException(403, "Error: already taken");
+                    }
                     gameAccess.updateGame(joinGameRequest.gameID(), authAccess.getAuth(authToken).username(), null);
                 }
                 else{
@@ -60,7 +66,10 @@ public class ChessService {
                 }
             }
             case "BLACK" -> {
-                if(gameAccess.getGame(joinGameRequest.gameID()) != null && gameAccess.getGame(joinGameRequest.gameID()).blackUsername() == null){
+                if(game != null && game.blackUsername() == null){
+                    if(game.whiteUsername() != null && game.whiteUsername().equals(username)){
+                        throw new ResponseException(403, "Error: already taken");
+                    }
                     gameAccess.updateGame(joinGameRequest.gameID(), null, authAccess.getAuth(authToken).username());
                 }
                 else{
