@@ -4,10 +4,13 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Scanner;
 
 import com.google.gson.Gson;
+
+import model.GameData;
 
 public class Console {
 
@@ -241,6 +244,10 @@ public class Console {
             var values = line.split(" ");
             if(values.length == 2){
                 System.out.printf("Hold on%n");
+                HttpURLConnection http = sendRequest("http://localhost:3000/game", "GET", "", authToken);
+                var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
+                GameData game = findGame(result, values[1]);
+                System.out.println(game.game());
             }
             else{
                 System.out.printf("Format is incorrect. It is >>> observe <ID>%n");
@@ -304,4 +311,83 @@ public class Console {
         }
         return responseBody;
     }
+
+    private static GameData findGame(Object httpResonse, String gameID){
+        var result = new Gson().fromJson(httpResonse.toString(), Map.class);
+        var res = new Gson().fromJson(result.get("games").toString(), ArrayList.class);
+        for(int i = 0; i < res.size(); i++){
+            GameData game = new Gson().fromJson(res.get(i).toString(), GameData.class);
+            if(game.gameID() == Integer.parseInt(gameID)){
+                return game;
+            }
+        }
+        return null;
+    }
+
 }
+/* 
+Example json input
+{games=
+    [
+        {
+            gameID=1.0, 
+            gameName=coolGame, 
+            game={
+                board={
+                    board=[
+                    [
+                        {pieceColor=BLACK, type=ROOK}, 
+                        {pieceColor=BLACK, type=KNIGHT}, 
+                        {pieceColor=BLACK, type=BISHOP}, 
+                        {pieceColor=BLACK, type=QUEEN}, 
+                        {pieceColor=BLACK, type=KING}, 
+                        {pieceColor=BLACK, type=BISHOP}, 
+                        {pieceColor=BLACK, type=KNIGHT}, 
+                        {pieceColor=BLACK, type=ROOK}
+                    ], 
+                    [
+                        {pieceColor=BLACK, type=PAWN}, 
+                        {pieceColor=BLACK, type=PAWN}, 
+                        {pieceColor=BLACK, type=PAWN}, 
+                        {pieceColor=BLACK, type=PAWN}, 
+                        {pieceColor=BLACK, type=PAWN}, 
+                        {pieceColor=BLACK, type=PAWN}, 
+                        {pieceColor=BLACK, type=PAWN}, 
+                        {pieceColor=BLACK, type=PAWN}
+                    ], 
+                    [null, null, null, null, null, null, null, null], 
+                    [null, null, null, null, null, null, null, null], 
+                    [null, null, null, null, null, null, null, null], 
+                    [null, null, null, null, null, null, null, null], 
+                    [
+                        {pieceColor=WHITE, type=PAWN}, 
+                        {pieceColor=WHITE, type=PAWN}, 
+                        {pieceColor=WHITE, type=PAWN}, 
+                        {pieceColor=WHITE, type=PAWN}, 
+                        {pieceColor=WHITE, type=PAWN}, 
+                        {pieceColor=WHITE, type=PAWN}, 
+                        {pieceColor=WHITE, type=PAWN}, 
+                        {pieceColor=WHITE, type=PAWN}
+                    ], 
+                    [
+                        {pieceColor=WHITE, type=ROOK}, 
+                        {pieceColor=WHITE, type=KNIGHT}, 
+                        {pieceColor=WHITE, type=BISHOP}, 
+                        {pieceColor=WHITE, type=QUEEN}, 
+                        {pieceColor=WHITE, type=KING}, 
+                        {pieceColor=WHITE, type=BISHOP}, 
+                        {pieceColor=WHITE, type=KNIGHT}, 
+                        {pieceColor=WHITE, type=ROOK}]
+                    ]
+                }, 
+                currentTeamColor=WHITE
+            }
+        }
+    ],
+    [
+        next game
+    ]
+}
+
+
+*/
