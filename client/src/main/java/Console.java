@@ -7,16 +7,20 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.function.Predicate;
 
 import com.google.gson.Gson;
 
+import chess.ChessBoard;
+import chess.ChessGame;
+import chess.ChessPiece;
 import model.GameData;
 
 public class Console {
 
     private static String line;
     private static Scanner scanner;
-    private static String status = EscapeSequences.SET_TEXT_COLOR_RED + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
+    private static String status = EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
     private static boolean console = true;
     private static boolean loggedIn = false;
     // Change to be an instance
@@ -62,6 +66,9 @@ public class Console {
                 catch(IOException ex){
                     exceptionHandler(ex);
                 }
+                catch(NumberFormatException ex){
+                    System.out.printf("%sYou must input a number, not a string.%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
+                }
                 catch(Exception ex){
                     exceptionHandler(ex);
                 }
@@ -90,8 +97,7 @@ public class Console {
     }
 
     private static void exceptionHandler(Exception ex){
-        System.out.println("An error has occured");
-        System.out.println(ex.toString());
+        System.out.printf("%s%s%s%n", EscapeSequences.SET_TEXT_COLOR_RED, ex.getMessage(), EscapeSequences.FULL_COLOR_RESET);
     }
 
 
@@ -146,116 +152,89 @@ public class Console {
     }
 
     private static void login() throws Exception{
-        if(line.split(" ").length == 3){
-            var values = line.split(" ");
-            var body = Map.of("username", values[1], "password", values[2]);
-            HttpURLConnection http = sendRequest("http://localhost:3000/session", "POST", new Gson().toJson(body));
-            String response = receiveResponse(http).toString();
-            authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
-            loggedIn = true;
-            status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
-        }
-        else{
-            System.out.printf("Something is missing from your request.%nThe format is <USERNAME> <PASSWORD>%n");
-        }
+        checkLength(line, 3);
+        var values = line.split(" ");
+        var body = Map.of("username", values[1], "password", values[2]);
+        HttpURLConnection http = sendRequest("http://localhost:3000/session", "POST", new Gson().toJson(body));
+        String response = receiveResponse(http).toString();
+        authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
+        loggedIn = true;
+        status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
     }
 
     private static void register() throws Exception{
-        if(line.split(" ").length == 4){
-            // make HTTP protocol
-            var values = line.split(" ");
-            var body = Map.of("username", values[1], "password", values[2], "email", values[3]);
-            HttpURLConnection http = sendRequest("http://localhost:3000/user", "POST", new Gson().toJson(body));
-            String response = receiveResponse(http).toString();
-            authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
-            loggedIn = true;
-            status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
-        }
-        else{
-            System.out.printf("Something is missing%nThe format is <USERNAME> <PASSWORD> <EMAIL>%n");
-        }
+        checkLength(line, 4);
+        var values = line.split(" ");
+        var body = Map.of("username", values[1], "password", values[2], "email", values[3]);
+        HttpURLConnection http = sendRequest("http://localhost:3000/user", "POST", new Gson().toJson(body));
+        String response = receiveResponse(http).toString();
+        authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
+        loggedIn = true;
+        status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
     }
 
     // Postlogin
 
     private static void logout() throws Exception{
-        if(loggedIn){
-            // make request
-            HttpURLConnection http = sendRequest("http://localhost:3000/session", "DELETE", "", authToken);
-            receiveResponse(http);
-            loggedIn = false;
-            status = EscapeSequences.SET_TEXT_COLOR_RED + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
-        }
-        else{
-            System.out.printf("You have to log in first%n");
-        }
+        checkLogin();
+        HttpURLConnection http = sendRequest("http://localhost:3000/session", "DELETE", "", authToken);
+        receiveResponse(http);
+        loggedIn = false;
+        status = EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
     }
 
     private static void createGame() throws Exception{
-        if(loggedIn){
-            if(line.split(" ").length == 2){
-                String gameName = line.split(" ")[1];
-                var body = Map.of("gameName", gameName);
-                HttpURLConnection http = sendRequest("http://localhost:3000/game", "POST", new Gson().toJson(body), authToken);
-                receiveResponse(http);
-                System.out.printf("The game ('%s' has been created!%n", gameName);
-            }
-            else{
-                System.out.printf("Format is incorrect. It is >>> game <NAME>%n");
-            }
-        }
-        else{
-            System.out.printf("You have to log in first%n");
-        }
+        checkLogin();
+        checkLength(line, 2);
+        String gameName = line.split(" ")[1];
+        var body = Map.of("gameName", gameName);
+        HttpURLConnection http = sendRequest("http://localhost:3000/game", "POST", new Gson().toJson(body), authToken);
+        receiveResponse(http);
+        System.out.printf("The game '%s' has been created!%n", gameName);
 
     }
 
     private static void listGames() throws Exception{
-        if(loggedIn){
-            HttpURLConnection http = sendRequest("http://localhost:3000/game", "GET", "", authToken);
-            var games = receiveResponse(http);
-            System.out.printf("Below are the current games:%n%s%n", games);
-        }
-        else{
-            System.out.printf("You have to log in first%n");
+        checkLogin();
+        HttpURLConnection http = sendRequest("http://localhost:3000/game", "GET", "", authToken);
+        var games = receiveResponse(http);
+        ArrayList<GameData> gamesList = gamesAsList(games);
+        System.out.printf("Below are the current games\n");
+        for(int i = 0; i < gamesList.size(); i++){
+            System.out.printf("ID: %d | game: %s | white: %s | black: %s\n", gamesList.get(i).gameID(), gamesList.get(i).gameName(),
+                        gamesList.get(i).whiteUsername(), gamesList.get(i).blackUsername());
         }
     }
 
-    private static void joinGame() throws Exception{
-        if(loggedIn){
-            var values = line.split(" ");
-            if(values.length == 3){
-                var body = Map.of("playerColor", values[2], "gameID", values[1]);
-                HttpURLConnection http = sendRequest("http://localhost:3000/game", "PUT", new Gson().toJson(body), authToken);
-                receiveResponse(http);
-                System.out.printf("Congrats on joining a game%n");
-            }
-            else{
-                System.out.printf("Format is incorrect. It is >>> join <ID> [WHITE|BLACK]%n");
-            }
+    private static void joinGame() throws NumberFormatException, Exception{
+        checkLogin();
+        checkLength(line,3);
+        var values = line.split(" ");
+        int gameID = Integer.parseInt(values[1]);
+        if(gameID < 1){
+            throw new Exception("ID must be greater than 0");
+        }
+        if(values[2].equals("WHITE") || values[2].equals("BLACK")){
+            var body = Map.of("playerColor", values[2], "gameID", gameID);
+            HttpURLConnection http = sendRequest("http://localhost:3000/game", "PUT", new Gson().toJson(body), authToken);
+            receiveResponse(http);
+            System.out.printf("Congrats on joining a game%n");
+            
         }
         else{
-            System.out.printf("You have to log in first%n");
+            throw new Exception("type must be either 'WHITE' OR 'BLACK'");
         }
+        
     }
 
     private static void observeGame() throws Exception{
-        if(loggedIn){
-            var values = line.split(" ");
-            if(values.length == 2){
-                System.out.printf("Hold on%n");
-                HttpURLConnection http = sendRequest("http://localhost:3000/game", "GET", "", authToken);
-                var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
-                GameData game = findGame(result, values[1]);
-                System.out.println(game.game());
-            }
-            else{
-                System.out.printf("Format is incorrect. It is >>> observe <ID>%n");
-            }
-        }
-        else{
-            System.out.printf("You have to log in first%n");
-        }
+        checkLogin();
+        checkLength(line, 2);
+        var values = line.split(" ");
+        HttpURLConnection http = sendRequest("http://localhost:3000/game", "GET", "", authToken);
+        var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
+        GameData game = findGame(result, values[1]);
+        printBoard(game.game().getBoard(), true);
     }
 
     private static HttpURLConnection sendRequest(String url, String method, String body) throws URISyntaxException, IOException {
@@ -264,7 +243,6 @@ public class Console {
         http.setRequestMethod(method);
         writeRequestBody(body, http);
         http.connect();
-        System.out.printf("= Request =========\n[%s] %s\n\n%s\n\n", method, url, body);
         return http;
     }
 
@@ -276,7 +254,6 @@ public class Console {
         http.setRequestMethod(method);
         writeRequestBody(body, http);
         http.connect();
-        System.out.printf("= Request =========\n[%s] %s\n\n%s\n\n", method, url, body);
         return http;
     }
 
@@ -292,14 +269,12 @@ public class Console {
 
     private static Object receiveResponse(HttpURLConnection http) throws IOException {
         int statusCode = http.getResponseCode();
-        String statusMessage = http.getResponseMessage();
 
         if(statusCode != 200){
             throw new IOException(Integer.toString(statusCode));
         }        
 
         Object responseBody = readResponseBody(http);
-        System.out.printf("= Response =========\n[%d] %s\n\n%s\n\n", statusCode, statusMessage, responseBody);
         return responseBody;
     }
 
@@ -312,8 +287,105 @@ public class Console {
         return responseBody;
     }
 
-    private static GameData findGame(Object httpResonse, String gameID){
-        var result = new Gson().fromJson(httpResonse.toString(), Map.class);
+    private static void checkLogin() throws Exception{
+        if(!loggedIn){
+            throw new Exception("You must log in to use that command.\n");
+        }
+    }
+
+    private static void checkLength(String line, int amount) throws Exception{
+        if(line.split(" ").length != amount){
+            throw new Exception("The format is incorrect, use the command 'help' to show correct format");
+        }
+    }
+
+    private static void printBoard(ChessBoard board, boolean white){
+        ChessPiece[][] pieces = board.getBoard();
+        boolean whiteBackground = true;
+        if(white){
+            for(int i = 0; i < 8; i++){
+                for(int j = 0; j < 8; j++){
+                    printPiece(pieces[i][j], whiteBackground);
+                    whiteBackground = !whiteBackground;
+                }
+                whiteBackground = !whiteBackground;
+                System.out.printf("%n");
+            }
+        }
+        else{
+            for(int i = 7; i >= 0; i--){
+                for(int j = 7; j >= 0; j--){
+                    printPiece(pieces[i][j], whiteBackground);
+                    whiteBackground = !whiteBackground;
+                }
+                whiteBackground = !whiteBackground;
+                System.out.printf("%n");
+            }
+        }
+
+    }
+
+    private static void printPiece(ChessPiece piece, boolean whiteBackground){
+        Predicate<ChessPiece> validPiece = x -> x != null;
+        if(whiteBackground){
+            System.out.printf("%s%s%s", EscapeSequences.SET_BG_COLOR_WHITE,
+                validPiece.test(piece) ? pieceChar(piece) : EscapeSequences.EMPTY, 
+                EscapeSequences.FULL_COLOR_RESET);
+        }
+        else{
+            System.out.printf("%s%s%s", EscapeSequences.SET_BG_COLOR_BLACK,
+                validPiece.test(piece) ? pieceChar(piece) : EscapeSequences.EMPTY, 
+                EscapeSequences.FULL_COLOR_RESET);
+        }
+    }
+
+    private static String pieceChar(ChessPiece piece){
+        if(piece.getTeamColor() == ChessGame.TeamColor.WHITE){
+            return switch (piece.getPieceType()){
+                case PAWN -> EscapeSequences.WHITE_PAWN;
+                case KNIGHT -> EscapeSequences.WHITE_KNIGHT;
+                case BISHOP -> EscapeSequences.WHITE_BISHOP;
+                case ROOK -> EscapeSequences.WHITE_ROOK;
+                case QUEEN -> EscapeSequences.WHITE_QUEEN;
+                case KING -> EscapeSequences.WHITE_KING;
+            };
+        }
+        return switch (piece.getPieceType()){
+            case PAWN -> EscapeSequences.BLACK_PAWN;
+            case KNIGHT -> EscapeSequences.BLACK_KNIGHT;
+            case BISHOP -> EscapeSequences.BLACK_BISHOP;
+            case ROOK -> EscapeSequences.BLACK_ROOK;
+            case QUEEN -> EscapeSequences.BLACK_QUEEN;
+            case KING -> EscapeSequences.BLACK_KING;
+        };
+    }
+
+    
+    /**
+     * Returns an ArrayList from the JSON http response
+     * @param httpResponse JSON response from the server
+     * @return ArrayList of type GameData
+     */
+    private static ArrayList<GameData> gamesAsList(Object httpResponse){
+        var result = new Gson().fromJson(httpResponse.toString(), Map.class);
+        var res = new Gson().fromJson(result.get("games").toString(), ArrayList.class);
+        ArrayList<GameData> currentGames = new ArrayList<>();
+        for(int i = 0; i < res.size(); i++){
+            GameData game = new Gson().fromJson(res.get(i).toString(), GameData.class);
+            currentGames.add(game);
+        }
+        return currentGames;
+    }
+
+
+    /**
+     * finds the game associated with a certain game ID
+     * @param httpResponse JSON response from the server
+     * @param gameID String input from the user
+     * @return Game if found, null if doesn't exist
+     */
+    private static GameData findGame(Object httpResponse, String gameID){
+        var result = new Gson().fromJson(httpResponse.toString(), Map.class);
         var res = new Gson().fromJson(result.get("games").toString(), ArrayList.class);
         for(int i = 0; i < res.size(); i++){
             GameData game = new Gson().fromJson(res.get(i).toString(), GameData.class);
@@ -325,69 +397,3 @@ public class Console {
     }
 
 }
-/* 
-Example json input
-{games=
-    [
-        {
-            gameID=1.0, 
-            gameName=coolGame, 
-            game={
-                board={
-                    board=[
-                    [
-                        {pieceColor=BLACK, type=ROOK}, 
-                        {pieceColor=BLACK, type=KNIGHT}, 
-                        {pieceColor=BLACK, type=BISHOP}, 
-                        {pieceColor=BLACK, type=QUEEN}, 
-                        {pieceColor=BLACK, type=KING}, 
-                        {pieceColor=BLACK, type=BISHOP}, 
-                        {pieceColor=BLACK, type=KNIGHT}, 
-                        {pieceColor=BLACK, type=ROOK}
-                    ], 
-                    [
-                        {pieceColor=BLACK, type=PAWN}, 
-                        {pieceColor=BLACK, type=PAWN}, 
-                        {pieceColor=BLACK, type=PAWN}, 
-                        {pieceColor=BLACK, type=PAWN}, 
-                        {pieceColor=BLACK, type=PAWN}, 
-                        {pieceColor=BLACK, type=PAWN}, 
-                        {pieceColor=BLACK, type=PAWN}, 
-                        {pieceColor=BLACK, type=PAWN}
-                    ], 
-                    [null, null, null, null, null, null, null, null], 
-                    [null, null, null, null, null, null, null, null], 
-                    [null, null, null, null, null, null, null, null], 
-                    [null, null, null, null, null, null, null, null], 
-                    [
-                        {pieceColor=WHITE, type=PAWN}, 
-                        {pieceColor=WHITE, type=PAWN}, 
-                        {pieceColor=WHITE, type=PAWN}, 
-                        {pieceColor=WHITE, type=PAWN}, 
-                        {pieceColor=WHITE, type=PAWN}, 
-                        {pieceColor=WHITE, type=PAWN}, 
-                        {pieceColor=WHITE, type=PAWN}, 
-                        {pieceColor=WHITE, type=PAWN}
-                    ], 
-                    [
-                        {pieceColor=WHITE, type=ROOK}, 
-                        {pieceColor=WHITE, type=KNIGHT}, 
-                        {pieceColor=WHITE, type=BISHOP}, 
-                        {pieceColor=WHITE, type=QUEEN}, 
-                        {pieceColor=WHITE, type=KING}, 
-                        {pieceColor=WHITE, type=BISHOP}, 
-                        {pieceColor=WHITE, type=KNIGHT}, 
-                        {pieceColor=WHITE, type=ROOK}]
-                    ]
-                }, 
-                currentTeamColor=WHITE
-            }
-        }
-    ],
-    [
-        next game
-    ]
-}
-
-
-*/

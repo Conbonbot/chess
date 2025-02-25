@@ -39,6 +39,14 @@ public class ChessBoard {
         this.board = otherBoard;
     }
 
+    /**
+     * Returns the array of the pieces
+     * @return ChessPiece[][]
+     */
+    public ChessPiece[][] getBoard(){
+        return board;
+    }
+
 
     /**
      * Gets a chess piece on the chessboard
