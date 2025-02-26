@@ -1,7 +1,7 @@
 
 //import chess.ChessGame;
 
-import serverFacade.ServerFacade;
+import serverfacade.ServerFacade;
 
 public class ClientMain {
     public static void main(String[] args) throws Exception{

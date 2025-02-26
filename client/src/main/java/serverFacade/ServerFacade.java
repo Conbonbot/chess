@@ -1,4 +1,4 @@
-package serverFacade;
+package serverfacade;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -74,7 +74,9 @@ public class ServerFacade {
                     exceptionHandler(ex);
                 }
                 catch(NumberFormatException ex){
-                    System.out.printf("%sYou must input a number, not a string.%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
+                    System.out.printf("%sYou must input a number, not a string.%s%n", 
+                        EscapeSequences.SET_TEXT_COLOR_RED, 
+                        EscapeSequences.FULL_COLOR_RESET);
                 }
                 catch(Exception ex){
                     exceptionHandler(ex);
@@ -91,11 +93,21 @@ public class ServerFacade {
     private  void exceptionHandler(IOException ex){
         try{
             switch (Integer.parseInt(ex.getMessage())) {
-                case 400 -> System.out.printf("%sError: bad request%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
-                case 401 -> System.out.printf("%sYou are unauthorized.%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
-                case 403 -> System.out.printf("%sThis has already been taken.%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
-                case 500 -> System.out.printf("%sInternal service error.%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
-                default -> System.out.printf("%sAn error has occured. Try again.%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
+                case 400 -> System.out.printf("%sError: bad request%s%n", 
+                            EscapeSequences.SET_TEXT_COLOR_RED, 
+                            EscapeSequences.FULL_COLOR_RESET);
+                case 401 -> System.out.printf("%sYou are unauthorized.%s%n", 
+                            EscapeSequences.SET_TEXT_COLOR_RED, 
+                            EscapeSequences.FULL_COLOR_RESET);
+                case 403 -> System.out.printf("%sThis has already been taken.%s%n", 
+                            EscapeSequences.SET_TEXT_COLOR_RED, 
+                            EscapeSequences.FULL_COLOR_RESET);
+                case 500 -> System.out.printf("%sInternal service error.%s%n", 
+                            EscapeSequences.SET_TEXT_COLOR_RED, 
+                            EscapeSequences.FULL_COLOR_RESET);
+                default -> System.out.printf("%sAn error has occured. Try again.%s%n", 
+                            EscapeSequences.SET_TEXT_COLOR_RED, 
+                            EscapeSequences.FULL_COLOR_RESET);
             }
         }
         catch(NumberFormatException error){

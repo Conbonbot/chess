@@ -12,7 +12,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 
 import exception.ResponseException;
 import server.Server;
-import serverFacade.ServerFacade;
+import serverfacade.ServerFacade;
 
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
