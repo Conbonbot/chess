@@ -170,4 +170,14 @@ public class ServerFacadeTests {
         Assertions.assertThrows(Exception.class, () -> facade.observeGame("observe 2"));
     }
 
+    @Test
+    @Order(16)
+    @DisplayName("Observe game while logged out")
+    public void loggedOutObserve() throws Exception{
+        login();
+        facade.createGame("create game");
+        facade.logout();
+        Assertions.assertThrows(Exception.class, () -> facade.observeGame("observe 2"));
+    }
+
 }
