@@ -143,12 +143,12 @@ public class ServerFacadeTests {
 
     @Test
     @Order(13)
-    @DisplayName("Join game twice")
+    @DisplayName("Join game as different colors")
     public void joinGameTwice() throws Exception{
         login();
         facade.createGame("create game");
         facade.joinGame("join 1 WHITE");
-        Assertions.assertThrows(Exception.class, () -> facade.joinGame("join 1 BLACK"));
+        Assertions.assertDoesNotThrow(() -> facade.joinGame("join 1 BLACK"));
     }
 
     @Test

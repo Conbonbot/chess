@@ -65,9 +65,6 @@ public class ChessService {
         switch (joinGameRequest.playerColor()) {
             case "WHITE" -> {
                 if(game != null && game.whiteUsername() == null){
-                    if(game.blackUsername() != null && game.blackUsername().equals(username)){
-                        throw new ResponseException(403, "Error: already taken");
-                    }
                     gameAccess.updateGame(joinGameRequest.gameID(), authAccess.getAuth(authToken).username(), null);
                 }
                 else{
@@ -76,9 +73,6 @@ public class ChessService {
             }
             case "BLACK" -> {
                 if(game != null && game.blackUsername() == null){
-                    if(game.whiteUsername() != null && game.whiteUsername().equals(username)){
-                        throw new ResponseException(403, "Error: already taken");
-                    }
                     gameAccess.updateGame(joinGameRequest.gameID(), null, authAccess.getAuth(authToken).username());
                 }
                 else{
