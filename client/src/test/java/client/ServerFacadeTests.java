@@ -134,7 +134,7 @@ public class ServerFacadeTests {
     }
 
     @Test
-    @Order(11)
+    @Order(12)
     @DisplayName("Join invalid game")
     public void invalidJoin() throws Exception{
         login();
@@ -142,7 +142,7 @@ public class ServerFacadeTests {
     }
 
     @Test
-    @Order(12)
+    @Order(13)
     @DisplayName("Join game twice")
     public void joinGameTwice() throws Exception{
         login();
@@ -152,7 +152,7 @@ public class ServerFacadeTests {
     }
 
     @Test
-    @Order(13)
+    @Order(14)
     @DisplayName("Join game twice as same color")
     public void joinGameTwiceColor() throws Exception{
         login();
@@ -162,7 +162,7 @@ public class ServerFacadeTests {
     }
 
     @Test
-    @Order(14)
+    @Order(15)
     @DisplayName("Observe game")
     public void validObserve() throws Exception{
         login();
@@ -171,7 +171,7 @@ public class ServerFacadeTests {
     }
 
     @Test
-    @Order(15)
+    @Order(16)
     @DisplayName("Observe invalid game")
     public void invalidObserve() throws Exception{
         login();
@@ -180,13 +180,22 @@ public class ServerFacadeTests {
     }
 
     @Test
-    @Order(16)
+    @Order(17)
     @DisplayName("Observe game while logged out")
     public void loggedOutObserve() throws Exception{
         login();
         facade.createGame("create game");
         facade.logout();
         Assertions.assertThrows(Exception.class, () -> facade.observeGame("observe 2"));
+    }
+
+    @Test
+    @Order(18)
+    @DisplayName("Observe game using word")
+    public void observeWithWord() throws Exception{
+        login();
+        facade.createGame("create game");
+        Assertions.assertThrows(Exception.class, () -> facade.observeGame("observe game"));
     }
 
 }
