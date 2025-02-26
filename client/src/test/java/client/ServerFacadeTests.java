@@ -126,6 +126,15 @@ public class ServerFacadeTests {
 
     @Test
     @Order(11)
+    @DisplayName("join with word")
+    public void joinWithWord() throws Exception{
+        login();
+        facade.createGame("create game");
+        Assertions.assertThrows(Exception.class, () -> facade.joinGame("join game WHITE"));
+    }
+
+    @Test
+    @Order(11)
     @DisplayName("Join invalid game")
     public void invalidJoin() throws Exception{
         login();
