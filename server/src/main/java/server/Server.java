@@ -5,9 +5,6 @@ import com.google.gson.Gson;
 import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryGameDAO;
 import dataaccess.MemoryUserDAO;
-import dataaccess.MySqlAuthDAO;
-import dataaccess.MySqlGameDAO;
-import dataaccess.MySqlUserDAO;
 import exception.ResponseException;
 import requests.Request;
 import results.Result;
@@ -26,7 +23,7 @@ public class Server {
     public Server(){
         ChessService serv;
         try{
-            serv = new ChessService(new MySqlAuthDAO(), new MySqlGameDAO(), new MySqlUserDAO());
+            serv = new ChessService();
         }
         catch(ResponseException ex){
             serv = new ChessService(new MemoryAuthDAO(), new MemoryGameDAO(), new MemoryUserDAO());

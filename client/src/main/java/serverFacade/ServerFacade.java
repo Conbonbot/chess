@@ -1,3 +1,4 @@
+package serverFacade;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,30 +16,36 @@ import chess.ChessBoard;
 import chess.ChessGame;
 import chess.ChessPiece;
 import model.GameData;
+import ui.EscapeSequences;
 
-public class Console {
+public class ServerFacade {
 
-    private static String line;
-    private static Scanner scanner;
-    private static String status = EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
-    private static boolean console = true;
-    private static boolean loggedIn = false;
+    private Scanner scanner;
+    private String status = EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
+    private boolean console = true;
+    private boolean loggedIn = false;
+    private String url;
     // Change to be an instance
-    private static String authToken = "";
+    private String authToken = "";
 
-    private static void init(){
+    private void init(){
         System.out.printf("%s%s Welcome to 240 Chess. Type Help to get started %s%n", 
                         EscapeSequences.FULL_COLOR_RESET,
                         EscapeSequences.BLACK_KING, 
                         EscapeSequences.WHITE_KING);
         
-        line = "";
 
         scanner = new Scanner(System.in);
     }
 
-    public static void run(){
+    public ServerFacade(int port){
+        url = "http://localhost:" + port;
+        scanner = new Scanner(System.in);
+    }
+
+    public void run(){
         init();
+        String line = "";
         while (!line.toLowerCase().equals("quit")) {
             System.out.printf("%s >>> ", status);
             if(console && scanner.hasNextLine()) {
@@ -49,14 +56,14 @@ public class Console {
                         case "quit" -> quit();
                         case "help" -> help();
                         // Prelogin commands
-                        case "login" -> login();
-                        case "register" -> register();
+                        case "login" -> login(line);
+                        case "register" -> register(line);
                         // Postlogin commands
                         case "logout" -> logout();
-                        case "create" -> createGame();
+                        case "create" -> createGame(line);
                         case "list" -> listGames();
-                        case "observe" -> observeGame();
-                        case "join" -> joinGame();
+                        case "observe" -> observeGame(line);
+                        case "join" -> joinGame(line);
                         default -> System.out.printf("%s'%s' is not recognized as a command. Type help for a list%s%n",
                                     EscapeSequences.SET_TEXT_COLOR_RED, 
                                     line,
@@ -81,7 +88,7 @@ public class Console {
         }
     }
 
-    private static void exceptionHandler(IOException ex){
+    private  void exceptionHandler(IOException ex){
         try{
             switch (Integer.parseInt(ex.getMessage())) {
                 case 400 -> System.out.printf("%sError: bad request%s%n", EscapeSequences.SET_TEXT_COLOR_RED, EscapeSequences.FULL_COLOR_RESET);
@@ -96,7 +103,7 @@ public class Console {
         }
     }
 
-    private static void exceptionHandler(Exception ex){
+    private void exceptionHandler(Exception ex){
         System.out.printf("%s%s%s%n", EscapeSequences.SET_TEXT_COLOR_RED, ex.getMessage(), EscapeSequences.FULL_COLOR_RESET);
     }
 
@@ -104,7 +111,7 @@ public class Console {
 
     // Prelogin
 
-    private static void help(){
+    private void help(){
         if(loggedIn){
             System.out.printf("\t%screate <NAME> %s- create a game%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
@@ -144,18 +151,18 @@ public class Console {
         
     }
 
-    private static void quit(){
+    public void quit(){
         System.out.println("Sounds good, have a great day");
         scanner.close();
         console = false;
         
     }
 
-    private static void login() throws Exception{
+    public void login(String line) throws Exception{
         checkLength(line, 3);
         var values = line.split(" ");
         var body = Map.of("username", values[1], "password", values[2]);
-        HttpURLConnection http = sendRequest("http://localhost:3000/session", "POST", new Gson().toJson(body));
+        HttpURLConnection http = sendRequest(url + "/session", "POST", new Gson().toJson(body));
         String response = receiveResponse(http).toString();
         authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
         loggedIn = true;
@@ -163,11 +170,11 @@ public class Console {
         System.out.printf("Welcome back %s!%n", values[1]);
     }
 
-    private static void register() throws Exception{
+    public void register(String line) throws Exception{
         checkLength(line, 4);
         var values = line.split(" ");
         var body = Map.of("username", values[1], "password", values[2], "email", values[3]);
-        HttpURLConnection http = sendRequest("http://localhost:3000/user", "POST", new Gson().toJson(body));
+        HttpURLConnection http = sendRequest(url + "/user", "POST", new Gson().toJson(body));
         String response = receiveResponse(http).toString();
         authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
         loggedIn = true;
@@ -177,28 +184,28 @@ public class Console {
 
     // Postlogin
 
-    private static void logout() throws Exception{
+    public void logout() throws Exception{
         checkLogin();
-        HttpURLConnection http = sendRequest("http://localhost:3000/session", "DELETE", "", authToken);
+        HttpURLConnection http = sendRequest(url + "/session", "DELETE", "", authToken);
         receiveResponse(http);
         loggedIn = false;
         status = EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
     }
 
-    private static void createGame() throws Exception{
+    public void createGame(String line) throws Exception{
         checkLogin();
         checkLength(line, 2);
         String gameName = line.split(" ")[1];
         var body = Map.of("gameName", gameName);
-        HttpURLConnection http = sendRequest("http://localhost:3000/game", "POST", new Gson().toJson(body), authToken);
+        HttpURLConnection http = sendRequest(url + "/game", "POST", new Gson().toJson(body), authToken);
         receiveResponse(http);
         System.out.printf("The game '%s' has been created!%n", gameName);
 
     }
 
-    private static void listGames() throws Exception{
+    public void listGames() throws Exception{
         checkLogin();
-        HttpURLConnection http = sendRequest("http://localhost:3000/game", "GET", "", authToken);
+        HttpURLConnection http = sendRequest(url + "/game", "GET", "", authToken);
         var games = receiveResponse(http);
         ArrayList<GameData> gamesList = gamesAsList(games);
         if(gamesList.isEmpty()){
@@ -214,7 +221,7 @@ public class Console {
         }
     }
 
-    private static void joinGame() throws NumberFormatException, Exception{
+    public void joinGame(String line) throws NumberFormatException, Exception{
         checkLogin();
         checkLength(line,3);
         var values = line.split(" ");
@@ -224,10 +231,10 @@ public class Console {
         }
         if(values[2].equals("WHITE") || values[2].equals("BLACK")){
             var body = Map.of("playerColor", values[2], "gameID", gameID);
-            HttpURLConnection http = sendRequest("http://localhost:3000/game", "PUT", new Gson().toJson(body), authToken);
+            HttpURLConnection http = sendRequest(url + "/game", "PUT", new Gson().toJson(body), authToken);
             receiveResponse(http);
             System.out.printf("Congrats on joining a game%nBelow is the board%n");
-            http = sendRequest("http://localhost:3000/game", "GET", "", authToken);
+            http = sendRequest(url + "/game", "GET", "", authToken);
             var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
             GameData game = findGame(result, values[1]);
             printBoard(game.game().getBoard(), values[2].equals("WHITE"));
@@ -238,17 +245,17 @@ public class Console {
         }
     }
 
-    private static void observeGame() throws Exception{
+    public void observeGame(String line) throws Exception{
         checkLogin();
         checkLength(line, 2);
         var values = line.split(" ");
-        HttpURLConnection http = sendRequest("http://localhost:3000/game", "GET", "", authToken);
+        HttpURLConnection http = sendRequest(url + "/game", "GET", "", authToken);
         var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
         GameData game = findGame(result, values[1]);
         printBoard(game.game().getBoard(), true);
     }
 
-    private static HttpURLConnection sendRequest(String url, String method, String body) throws URISyntaxException, IOException {
+    private HttpURLConnection sendRequest(String url, String method, String body) throws URISyntaxException, IOException {
         URI uri = new URI(url);
         HttpURLConnection http = (HttpURLConnection) uri.toURL().openConnection();
         http.setRequestMethod(method);
@@ -257,7 +264,7 @@ public class Console {
         return http;
     }
 
-    private static HttpURLConnection sendRequest(String url, String method, String body, String authToken) throws URISyntaxException, IOException {
+    private HttpURLConnection sendRequest(String url, String method, String body, String authToken) throws URISyntaxException, IOException {
         URI uri = new URI(url);
         HttpURLConnection http = (HttpURLConnection) uri.toURL().openConnection();
         http.setDoOutput(true);
@@ -268,7 +275,7 @@ public class Console {
         return http;
     }
 
-    private static void writeRequestBody(String body, HttpURLConnection http) throws IOException {
+    private void writeRequestBody(String body, HttpURLConnection http) throws IOException {
         if (!body.isEmpty()) {
             http.setDoOutput(true);
             try (var outputStream = http.getOutputStream()) {
@@ -277,7 +284,7 @@ public class Console {
         }
     }
 
-    private static Object receiveResponse(HttpURLConnection http) throws IOException {
+    private Object receiveResponse(HttpURLConnection http) throws IOException {
         int statusCode = http.getResponseCode();
 
         if(statusCode != 200){
@@ -288,7 +295,7 @@ public class Console {
         return responseBody;
     }
 
-    private static Object readResponseBody(HttpURLConnection http) throws IOException {
+    private Object readResponseBody(HttpURLConnection http) throws IOException {
         Object responseBody;
         try (InputStream respBody = http.getInputStream()) {
             InputStreamReader inputStreamReader = new InputStreamReader(respBody);
@@ -297,19 +304,19 @@ public class Console {
         return responseBody;
     }
 
-    private static void checkLogin() throws Exception{
+    private void checkLogin() throws Exception{
         if(!loggedIn){
             throw new Exception("You must log in to use that command.\n");
         }
     }
 
-    private static void checkLength(String line, int amount) throws Exception{
+    private void checkLength(String line, int amount) throws Exception{
         if(line.split(" ").length != amount){
             throw new Exception("The format is incorrect, use the command 'help' to show correct format");
         }
     }
 
-    private static void printBoard(ChessBoard board, boolean white){
+    private void printBoard(ChessBoard board, boolean white){
         ChessPiece[][] pieces = board.getBoard();
         boolean whiteBackground = true;
         if(white){
@@ -335,7 +342,7 @@ public class Console {
 
     }
 
-    private static void printPiece(ChessPiece piece, boolean whiteBackground){
+    private void printPiece(ChessPiece piece, boolean whiteBackground){
         Predicate<ChessPiece> validPiece = x -> x != null;
         if(whiteBackground){
             System.out.printf("%s%s%s", EscapeSequences.SET_BG_COLOR_WHITE,
@@ -349,7 +356,7 @@ public class Console {
         }
     }
 
-    private static String pieceChar(ChessPiece piece){
+    private String pieceChar(ChessPiece piece){
         if(piece.getTeamColor() == ChessGame.TeamColor.WHITE){
             return switch (piece.getPieceType()){
                 case PAWN -> EscapeSequences.WHITE_PAWN;
@@ -376,7 +383,7 @@ public class Console {
      * @param httpResponse JSON response from the server
      * @return ArrayList of type GameData
      */
-    private static ArrayList<GameData> gamesAsList(Object httpResponse){
+    private ArrayList<GameData> gamesAsList(Object httpResponse){
         var result = new Gson().fromJson(httpResponse.toString(), Map.class);
         var res = new Gson().fromJson(result.get("games").toString(), ArrayList.class);
         ArrayList<GameData> currentGames = new ArrayList<>();
@@ -394,7 +401,7 @@ public class Console {
      * @param gameID String input from the user
      * @return Game if found, null if doesn't exist
      */
-    private static GameData findGame(Object httpResponse, String gameID){
+    private GameData findGame(Object httpResponse, String gameID){
         var result = new Gson().fromJson(httpResponse.toString(), Map.class);
         var res = new Gson().fromJson(result.get("games").toString(), ArrayList.class);
         for(int i = 0; i < res.size(); i++){
@@ -404,6 +411,18 @@ public class Console {
             }
         }
         return null;
+    }
+
+    // This is used for testing purposes
+    public void resetDatabase(){
+        try{
+            HttpURLConnection http = sendRequest(url + "/db", "DELETE", "");
+            receiveResponse(http);
+        }
+        catch(IOException | URISyntaxException ex){
+            System.out.println("Something happened :(");
+        }
+
     }
 
 }

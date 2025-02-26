@@ -109,6 +109,14 @@ public class MySqlGameDAO implements GameDAO{
         catch(SQLException ex){
             throw new ResponseException(500, "Error: bad database request");
         }
+        // reset autoincrement
+        statement = "ALTER TABLE game AUTO_INCREMENT 1";
+        try(var delete = conn.prepareStatement(statement)){
+            delete.executeUpdate();
+        }
+        catch(SQLException ex){
+            throw new ResponseException(500, "Error: bad database request");
+        }
     }
 
     private final String[] createGameTable = {

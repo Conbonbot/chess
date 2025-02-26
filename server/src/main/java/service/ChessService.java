@@ -3,6 +3,9 @@ import java.util.UUID;
 
 import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
+import dataaccess.MySqlAuthDAO;
+import dataaccess.MySqlGameDAO;
+import dataaccess.MySqlUserDAO;
 import dataaccess.UserDAO;
 import exception.ResponseException;
 import model.AuthData;
@@ -22,6 +25,12 @@ public class ChessService {
         this.authAccess = authAccess;
         this.gameAccess = gameAccess;
         this.userAccess = userAccess;
+    }
+
+    public ChessService() throws ResponseException{
+        authAccess = new MySqlAuthDAO();
+        gameAccess = new MySqlGameDAO();
+        userAccess = new MySqlUserDAO();        
     }
 
     public void clear(Request.Delete clearDatabaseRequest) throws ResponseException{
