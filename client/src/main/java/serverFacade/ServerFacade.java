@@ -23,9 +23,7 @@ public class ServerFacade {
     private Scanner scanner;
     private String status = EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
     private boolean console = true;
-    private boolean loggedIn = false;
     private final String url;
-    // Change to be an instance
     private String authToken = "";
     private String userGameID = "";
     private String username = "";
@@ -70,7 +68,7 @@ public class ServerFacade {
                         case "resign" -> resign();
                         case "move" -> makeMove(line);
                         case "legal" -> highlightMoves(line);
-                        case "redraw" -> redrawBoard();
+                        case "redraw" -> redrawBoard(line);
                         default -> System.out.printf("%s'%s' is not recognized as a command. Type help for a list%s%n",
                                     EscapeSequences.SET_TEXT_COLOR_RED, 
                                     line,
@@ -122,16 +120,34 @@ public class ServerFacade {
         }
     }
 
+    // Exceptions and checkers
+
     private void exceptionHandler(Exception ex){
         System.out.printf("%s%s%s%n", EscapeSequences.SET_TEXT_COLOR_RED, ex.getMessage(), EscapeSequences.FULL_COLOR_RESET);
     }
 
+    private void checkLogin() throws Exception{
+        if(username.equals("")){
+            throw new Exception("You must log in to use that command.\n");
+        }
+    }
 
+    private void checkLength(String line, int amount) throws Exception{
+        if(line.split(" ").length != amount){
+            throw new Exception("The format is incorrect, use the command 'help' to show correct format");
+        }
+    }
+
+    private void checkLength(String line, int lower, int upper) throws Exception{
+        if(line.split(" ").length > upper || line.split(" ").length < lower){
+            throw new Exception("The format is incorrect, use the command 'help' to show correct format");
+        }
+    }
 
     // Prelogin
 
     private void help(){
-        if(loggedIn){
+        if(username.equals("")){
             System.out.printf("\t%screate <NAME> %s- create a game%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
@@ -184,7 +200,6 @@ public class ServerFacade {
         HttpURLConnection http = sendRequest(url + "/session", "POST", new Gson().toJson(body));
         String response = receiveResponse(http).toString();
         authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
-        loggedIn = true;
         username = values[1];
         status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
         System.out.printf("Welcome back %s!%n", values[1]);
@@ -197,7 +212,7 @@ public class ServerFacade {
         HttpURLConnection http = sendRequest(url + "/user", "POST", new Gson().toJson(body));
         String response = receiveResponse(http).toString();
         authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
-        loggedIn = true;
+        username = values[1];
         status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
         System.out.printf("Welcome to chess! use the command 'help' to show commands!%n");
     }
@@ -208,7 +223,6 @@ public class ServerFacade {
         checkLogin();
         HttpURLConnection http = sendRequest(url + "/session", "DELETE", "", authToken);
         receiveResponse(http);
-        loggedIn = false;
         username = "";
         status = EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
     }
@@ -268,7 +282,12 @@ public class ServerFacade {
     }
 
     public void leaveGame() throws Exception{
-        // TODO: implement second
+        // TODO: implement
+        checkLogin();
+        if(userGameID.equals("")){
+            throw new Exception("You are not currently connected to any games");
+        }
+
     }
 
     public void resign() throws Exception{
@@ -283,23 +302,60 @@ public class ServerFacade {
         // TODO: Implement fourth
     }
 
-    public void redrawBoard() throws Exception{
-        if(userGameID.equals("")){
-            throw new Exception("You are not currently connected to any games");
+    public void redrawBoard(String line) throws Exception{
+        checkLogin();
+        checkLength(line, 1, 2);
+        ArrayList<GameData> userGames = userGamesAsList();
+        if(userGames.isEmpty()){
+            throw new Exception("You are currently not in any games");
         }
-        HttpURLConnection http = sendRequest(url + "/game", "GET", "", authToken);
-        var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
-        GameData game = findGame(result, userGameID);
-        if(game.whiteUsername() != null){
-            printBoard(game.game().getBoard(), game.whiteUsername().equals(username));
+        if(userGames.size() > 1 && line.split(" ").length == 1){
+            ArrayList<Integer> ids = new ArrayList<>();
+            for(GameData game : userGames){
+                ids.add(game.gameID());
+            }
+            String error = "You are currently in " + userGames.size() + " games, add an id from below to redraw the correct board.\nGameID: ";
+            for(Integer id : ids){
+                error += id + " ";
+            }
+            throw new Exception(error);
         }
-        else if(game.blackUsername() != null){
-            printBoard(game.game().getBoard(), !game.blackUsername().equals(username));
+        if(userGames.size() == 1){
+            GameData game = userGames.get(0);
+            if(game.whiteUsername() != null){
+                printBoard(game.game().getBoard(), game.whiteUsername().equals(username));
+            }
+            else if(game.blackUsername() != null){
+                printBoard(game.game().getBoard(), !game.blackUsername().equals(username));
+            }
+        }
+        else{
+            int gameID = Integer.parseInt(line.split(" ")[1]);
+            if(gameID < 1){
+                throw new Exception("ID must be greater than 0");
+            }
+            ArrayList<Integer> ids = new ArrayList<>();
+            for(GameData game : userGames){
+                ids.add(game.gameID());
+                if(game.gameID() == gameID){
+                    if(game.whiteUsername() != null){
+                        printBoard(game.game().getBoard(), game.whiteUsername().equals(username));
+                    }
+                    else if(game.blackUsername() != null){
+                        printBoard(game.game().getBoard(), !game.blackUsername().equals(username));
+                    }
+                    return;
+                }
+            }
+            String error = String.format("You are not in the game with ID of %d. Below are the games you are currently in\nGameID: ", gameID);
+            for(Integer id : ids){
+                error += id + " ";
+            }
+            throw new Exception(error);
         }
 
         
     }
-
 
     public void observeGame(String line) throws Exception{
         checkLogin();
@@ -360,17 +416,6 @@ public class ServerFacade {
         return responseBody;
     }
 
-    private void checkLogin() throws Exception{
-        if(!loggedIn){
-            throw new Exception("You must log in to use that command.\n");
-        }
-    }
-
-    private void checkLength(String line, int amount) throws Exception{
-        if(line.split(" ").length != amount){
-            throw new Exception("The format is incorrect, use the command 'help' to show correct format");
-        }
-    }
 
     private void printBoard(ChessBoard board, boolean white){
         
@@ -472,6 +517,21 @@ public class ServerFacade {
         return currentGames;
     }
 
+    private ArrayList<GameData> userGamesAsList() throws Exception{
+        HttpURLConnection http = sendRequest(url + "/game", "GET", "", authToken);
+        var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
+        var res = new Gson().fromJson(result.get("games").toString(), ArrayList.class);
+        ArrayList<GameData> currentGames = new ArrayList<>();
+        for(int i = 0; i < res.size(); i++){
+            GameData game = new Gson().fromJson(res.get(i).toString(), GameData.class);
+            if((game.whiteUsername() != null && game.whiteUsername().equals(username)) 
+            || (game.blackUsername() != null && game.blackUsername().equals(username))){
+                currentGames.add(game);
+            }
+        }
+        return currentGames;
+    }
+
 
     /**
      * finds the game associated with a certain game ID
@@ -479,12 +539,16 @@ public class ServerFacade {
      * @param gameID String input from the user
      * @return Game if found, null if doesn't exist
      */
-    private GameData findGame(Object httpResponse, String gameID){
+    private GameData findGame(Object httpResponse, String gameID) throws Exception{
         var result = new Gson().fromJson(httpResponse.toString(), Map.class);
         var res = new Gson().fromJson(result.get("games").toString(), ArrayList.class);
+        int id = Integer.parseInt(gameID);
+        if(id < 1){
+            throw new Exception("ID must be greater than 0");
+        }
         for(int i = 0; i < res.size(); i++){
             GameData game = new Gson().fromJson(res.get(i).toString(), GameData.class);
-            if(game.gameID() == Integer.parseInt(gameID)){
+            if(game.gameID() == id){
                 return game;
             }
         }
