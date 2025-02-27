@@ -24,7 +24,7 @@ public class ServerFacade {
     private String status = EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
     private boolean console = true;
     private boolean loggedIn = false;
-    private String url;
+    private final String url;
     // Change to be an instance
     private String authToken = "";
 
@@ -64,6 +64,11 @@ public class ServerFacade {
                         case "list" -> listGames();
                         case "observe" -> observeGame(line);
                         case "join" -> joinGame(line);
+                        case "leave" -> leaveGame();
+                        case "resign" -> resign();
+                        case "move" -> makeMove(line);
+                        case "legal" -> highlightMoves(line);
+                        case "redraw" -> redrawBoard();
                         default -> System.out.printf("%s'%s' is not recognized as a command. Type help for a list%s%n",
                                     EscapeSequences.SET_TEXT_COLOR_RED, 
                                     line,
@@ -178,7 +183,7 @@ public class ServerFacade {
         String response = receiveResponse(http).toString();
         authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
         loggedIn = true;
-        status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
+        status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
         System.out.printf("Welcome back %s!%n", values[1]);
     }
 
@@ -190,7 +195,7 @@ public class ServerFacade {
         String response = receiveResponse(http).toString();
         authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
         loggedIn = true;
-        status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
+        status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
         System.out.printf("Welcome to chess! use the command 'help' to show commands!%n");
     }
 
@@ -256,6 +261,27 @@ public class ServerFacade {
             throw new Exception("type must be either 'WHITE' OR 'BLACK'");
         }
     }
+
+    public void leaveGame() throws Exception{
+
+    }
+
+    public void resign() throws Exception{
+
+    }
+
+    public void makeMove(String line) throws Exception{
+
+    }
+
+    public void highlightMoves(String line) throws Exception{
+
+    }
+
+    public void redrawBoard() throws Exception{
+
+    }
+
 
     public void observeGame(String line) throws Exception{
         checkLogin();
@@ -329,29 +355,52 @@ public class ServerFacade {
     }
 
     private void printBoard(ChessBoard board, boolean white){
+        
         ChessPiece[][] pieces = board.getBoard();
         boolean whiteBackground = true;
         if(white){
+            printLetters(false);
             for(int i = 0; i < 8; i++){
+                System.out.print(8-i + " ");
                 for(int j = 0; j < 8; j++){
                     printPiece(pieces[i][j], whiteBackground);
                     whiteBackground = !whiteBackground;
                 }
+                System.out.printf(" %d%n", 8-i);
                 whiteBackground = !whiteBackground;
-                System.out.printf("%n");
             }
+            printLetters(false);
         }
         else{
+            printLetters(true);
             for(int i = 7; i >= 0; i--){
+                System.out.print(8-i + " ");
                 for(int j = 7; j >= 0; j--){
                     printPiece(pieces[i][j], whiteBackground);
                     whiteBackground = !whiteBackground;
                 }
+                System.out.printf(" %d%n", 8-i);
                 whiteBackground = !whiteBackground;
-                System.out.printf("%n");
             }
+            printLetters(true);
         }
 
+    }
+
+    private void printLetters(boolean reverse){
+        String[] pos = {"a", "b", "c", "d", "e", "f", "g", "h"};
+        System.out.print(" ");
+        if(!reverse){
+            for(String letter : pos){
+                System.out.printf("  %s", letter);
+            }
+        }
+        else{
+            for(int i = 7; i >= 0; i--){
+                System.out.printf("  %s", pos[i]);
+            }
+        }
+        System.out.println("");
     }
 
     private void printPiece(ChessPiece piece, boolean whiteBackground){
@@ -371,21 +420,21 @@ public class ServerFacade {
     private String pieceChar(ChessPiece piece){
         if(piece.getTeamColor() == ChessGame.TeamColor.WHITE){
             return switch (piece.getPieceType()){
-                case PAWN -> EscapeSequences.WHITE_PAWN;
-                case KNIGHT -> EscapeSequences.WHITE_KNIGHT;
-                case BISHOP -> EscapeSequences.WHITE_BISHOP;
-                case ROOK -> EscapeSequences.WHITE_ROOK;
-                case QUEEN -> EscapeSequences.WHITE_QUEEN;
-                case KING -> EscapeSequences.WHITE_KING;
+                case PAWN -> EscapeSequences.SET_TEXT_COLOR_RED + EscapeSequences.WHITE_PAWN;
+                case KNIGHT -> EscapeSequences.SET_TEXT_COLOR_RED + EscapeSequences.WHITE_KNIGHT;
+                case BISHOP -> EscapeSequences.SET_TEXT_COLOR_RED + EscapeSequences.WHITE_BISHOP;
+                case ROOK -> EscapeSequences.SET_TEXT_COLOR_RED + EscapeSequences.WHITE_ROOK;
+                case QUEEN -> EscapeSequences.SET_TEXT_COLOR_RED + EscapeSequences.WHITE_QUEEN;
+                case KING -> EscapeSequences.SET_TEXT_COLOR_RED + EscapeSequences.WHITE_KING;
             };
         }
         return switch (piece.getPieceType()){
-            case PAWN -> EscapeSequences.BLACK_PAWN;
-            case KNIGHT -> EscapeSequences.BLACK_KNIGHT;
-            case BISHOP -> EscapeSequences.BLACK_BISHOP;
-            case ROOK -> EscapeSequences.BLACK_ROOK;
-            case QUEEN -> EscapeSequences.BLACK_QUEEN;
-            case KING -> EscapeSequences.BLACK_KING;
+            case PAWN -> EscapeSequences.SET_TEXT_COLOR_BLUE + EscapeSequences.BLACK_PAWN;
+            case KNIGHT -> EscapeSequences.SET_TEXT_COLOR_BLUE + EscapeSequences.BLACK_KNIGHT;
+            case BISHOP -> EscapeSequences.SET_TEXT_COLOR_BLUE + EscapeSequences.BLACK_BISHOP;
+            case ROOK -> EscapeSequences.SET_TEXT_COLOR_BLUE + EscapeSequences.BLACK_ROOK;
+            case QUEEN -> EscapeSequences.SET_TEXT_COLOR_BLUE + EscapeSequences.BLACK_QUEEN;
+            case KING -> EscapeSequences.SET_TEXT_COLOR_BLUE + EscapeSequences.BLACK_KING;
         };
     }
 
