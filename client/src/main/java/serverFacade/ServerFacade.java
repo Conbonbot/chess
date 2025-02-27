@@ -552,7 +552,7 @@ public class ServerFacade {
                 return game;
             }
         }
-        return null;
+        throw new Exception("No game exists with id " + gameID);
     }
 
     // This is used for testing purposes
