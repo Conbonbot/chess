@@ -263,23 +263,23 @@ public class ServerFacade {
     }
 
     public void leaveGame() throws Exception{
-
+        // TODO: implement second
     }
 
     public void resign() throws Exception{
-
+        // TODO: Implement third
     }
 
     public void makeMove(String line) throws Exception{
-
+        // TODO: Implement last
     }
 
     public void highlightMoves(String line) throws Exception{
-
+        // TODO: Implement fourth
     }
 
     public void redrawBoard() throws Exception{
-
+        // TODO: Implement first
     }
 
 
