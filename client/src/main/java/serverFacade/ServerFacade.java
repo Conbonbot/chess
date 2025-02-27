@@ -27,6 +27,8 @@ public class ServerFacade {
     private final String url;
     // Change to be an instance
     private String authToken = "";
+    private String userGameID = "";
+    private String username = "";
 
     private void init(){
         System.out.printf("%s%s Welcome to 240 Chess. Type Help to get started %s%n", 
@@ -183,6 +185,7 @@ public class ServerFacade {
         String response = receiveResponse(http).toString();
         authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
         loggedIn = true;
+        username = values[1];
         status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
         System.out.printf("Welcome back %s!%n", values[1]);
     }
@@ -206,6 +209,7 @@ public class ServerFacade {
         HttpURLConnection http = sendRequest(url + "/session", "DELETE", "", authToken);
         receiveResponse(http);
         loggedIn = false;
+        username = "";
         status = EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
     }
 
@@ -254,6 +258,7 @@ public class ServerFacade {
             http = sendRequest(url + "/game", "GET", "", authToken);
             var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
             GameData game = findGame(result, values[1]);
+            userGameID = values[1];
             printBoard(game.game().getBoard(), values[2].equals("WHITE"));
             System.out.printf("^ This is your side ^%n");
         }
@@ -279,7 +284,20 @@ public class ServerFacade {
     }
 
     public void redrawBoard() throws Exception{
-        // TODO: Implement first
+        if(userGameID.equals("")){
+            throw new Exception("You are not currently connected to any games");
+        }
+        HttpURLConnection http = sendRequest(url + "/game", "GET", "", authToken);
+        var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
+        GameData game = findGame(result, userGameID);
+        if(game.whiteUsername() != null){
+            printBoard(game.game().getBoard(), game.whiteUsername().equals(username));
+        }
+        else if(game.blackUsername() != null){
+            printBoard(game.game().getBoard(), !game.blackUsername().equals(username));
+        }
+
+        
     }
 
 
@@ -438,7 +456,6 @@ public class ServerFacade {
         };
     }
 
-    
     /**
      * Returns an ArrayList from the JSON http response
      * @param httpResponse JSON response from the server
