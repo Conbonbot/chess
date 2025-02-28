@@ -138,6 +138,11 @@ public class ChessService {
         return game.game();
     }
 
+    // Returns the username from an authToken
+    public String getUsername(String authToken) throws ResponseException{
+        return authAccess.getAuth(authToken).username();
+    }
+
     // update a game from the websocket
     public void updateGame(String authToken, int gameID, ChessGame game) throws ResponseException{
         checkAuth(authToken); 

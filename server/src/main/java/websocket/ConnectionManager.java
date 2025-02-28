@@ -14,7 +14,8 @@ public class ConnectionManager {
 
     // add connection
     public void add(String authToken, Session session){
-        connections.put(authToken, new Connection(authToken, session));
+        // TODO: change
+        connections.put(authToken, new Connection(authToken, 0, session));
     }
 
     // remove connection
@@ -27,7 +28,7 @@ public class ConnectionManager {
         var removeList = new ArrayList<Connection>();
         for(var connection : connections.values()){
             if(connection.session.isOpen()){
-                if(!connection.getAuthToken().equals(authToken)){
+                if(!connection.getGameID().equals(authToken)){
                     connection.send(serverMessage.toString());
                 }
             }
@@ -36,7 +37,7 @@ public class ConnectionManager {
             }
         }
         for(var connection : removeList){
-            connections.remove(connection.getAuthToken());
+            connections.remove(connection.getGameID());
         }
     }
 }

@@ -27,6 +27,7 @@ import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
 import websocket.messages.HighlightMessage;
 import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationMessage;
 import websocket.messages.ServerMessage;
 import websocket.messages.ServerMessage.ServerMessageType;
 import static websocket.messages.ServerMessage.ServerMessageType.ERROR;
@@ -61,14 +62,18 @@ public class WebSocketHandler{
     }
 
     private void connect(ConnectCommand command, Session session) throws IOException, ResponseException{
-        connections.add(command.getAuthToken(), session);
+        connections.add(Integer.toString(command.getGameID()), session);
         try{
             chessService.joinGame(command.getAuthToken(), new Request.JoinGame(command.getPlayerColor(), command.getGameID()));
             // send chess board
             ChessBoard game = chessService.getBoard(command.getAuthToken(), command.getGameID());
             LoadGameMessage message = new LoadGameMessage(LOAD_GAME, game, command.getPlayerColor().toLowerCase().equals("white"));
             session.getRemote().sendString(new Gson().toJson(message));
-            
+            // send messages to others
+            String str = chessService.getUsername(command.getAuthToken());
+            str += " has joined the game as color " + command.getPlayerColor();
+            NotificationMessage broadcastMessage = new NotificationMessage(LOAD_GAME, str);
+            connections.broadcast(Integer.toString(command.getGameID()), broadcastMessage);
         }
         catch(ResponseException ex){
             ErrorMessage message = new ErrorMessage(ServerMessageType.CONNECT_ERROR, ex.getMessage());
