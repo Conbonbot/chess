@@ -6,7 +6,6 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.function.Predicate;
@@ -517,43 +516,6 @@ public class ChessClient implements ServerMessageObserver{
             move = new ChessMove(locationToPosition(values[1]), locationToPosition(values[2]), toPromotion(values[3]));
         }
         ws.makeMove(authToken, userGameID, isWhite, move);
-        /*
-        ChessPosition pos = locationToPosition(values[1]);
-        GameData gameData = currentUserGame();
-        ChessGame game = gameData.game();
-        ChessPiece piece = game.getBoard().getPiece(pos);
-        Collection<ChessMove> moves;
-        ChessGame.TeamColor pieceColor;
-        try{
-            pieceColor = game.getBoard().getPiece(pos).getTeamColor();
-            if(pieceColor == ChessGame.TeamColor.WHITE && !isWhite
-            || pieceColor == ChessGame.TeamColor.BLACK && isWhite){
-                throw new Exception("That piece is not yours.");
-            }
-            moves = game.validMoves(pos);
-        }
-        catch(NullPointerException ex){
-            throw new Exception("That square is empty.");
-        }
-        // check team turn
-        if(game.getTeamTurn() == TeamColor.WHITE && !isWhite
-        || game.getTeamTurn() == TeamColor.BLACK && isWhite){
-            throw new Exception("It is not your turn");
-        }
-        // check pawn promotion
-        if(piece.getPieceType() != ChessPiece.PieceType.PAWN && line.split(" ").length == 4){
-            throw new Exception("Invalid promotion move");
-        }
-        var promotion = (line.split(" ").length == 4) ? line.split(" ")[3] : "";
-        ChessMove move = new ChessMove(pos, locationToPosition(values[2]), toPromotion(promotion));
-        validMove(moves, move);
-        game.makeMove(move);
-        // send data to server
-        var body = Map.of("gameID", gameData.gameID(), "game", game);
-        HttpURLConnection http = sendRequest(url + "/update_game", "PUT", new Gson().toJson(body), authToken);
-        receiveResponse(http);
-        // TODO: websocket
-         */
     }
 
 
@@ -801,30 +763,6 @@ public class ChessClient implements ServerMessageObserver{
             currentGames.add(game);
         }
         return currentGames;
-    }
-
-    private GameData currentUserGame() throws Exception{
-        HttpURLConnection http = sendRequest(url + "/game", "GET", "", authToken);
-        var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
-        var res = new Gson().fromJson(result.get("games").toString(), ArrayList.class);
-        for(int i = 0; i < res.size(); i++){
-            GameData game = new Gson().fromJson(res.get(i).toString(), GameData.class);
-            if(game.gameID() == Integer.parseInt(userGameID)){
-                return game;
-            }
-        }
-        throw new Exception("You are not connected to any games");
-    }
-
-
-
-    private void validMove(Collection<ChessMove> moves, ChessMove pos) throws Exception{
-        for(ChessMove move : moves){
-            if(move.equals(pos)){
-                return;
-            }
-        }
-        throw new Exception("That is not a valid move.");
     }
 
     private ChessPiece.PieceType toPromotion(String promotion){
