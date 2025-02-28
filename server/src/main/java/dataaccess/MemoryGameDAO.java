@@ -67,6 +67,11 @@ public class MemoryGameDAO implements GameDAO {
     }
 
     @Override
+    public void deleteGame(int gameID){
+        games.remove(findGameIndex(gameID));
+    }
+
+    @Override
     public void clear(){
         nextID = 1;
         games.clear();

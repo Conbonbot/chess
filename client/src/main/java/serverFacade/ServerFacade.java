@@ -33,6 +33,7 @@ public class ServerFacade {
     private String authToken = "";
     private String username = "";
     private boolean isWhite;
+    private boolean isObserving = false;
     private String userGameID = "";
 
     private void init(){
@@ -152,18 +153,10 @@ public class ServerFacade {
     }
 
     private void checkGame() throws Exception{
-        if(userGameID.isEmpty()){
-            ArrayList<GameData> userGames = userGamesAsList();
-            ArrayList<Integer> ids = new ArrayList<>();
-            for(GameData game : userGames){
-                ids.add(game.gameID());
-            }
-            String error = "You are currently in " + userGames.size() + " games, add an id from below for the proper game.\nGameID: ";
-            for(Integer id : ids){
-                error += id + " ";
-            }
-            throw new Exception(error);
+        if(isObserving || !userGameID.isEmpty()){
+            return;
         }
+        throw new Exception("You are not currently in any games");
     }
 
     private void checkMove(String location) throws Exception{
@@ -349,17 +342,42 @@ public class ServerFacade {
 
 
     public void leaveGame(String line) throws Exception{
-        // TODO: Implement
+        checkLogin();
+        checkGame();
+        System.out.printf("Leaving game...%n");
         userGameID = "";
+        isObserving = false;
         status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
     }
 
     public void resign() throws Exception{
-        // TODO: Implement
+        checkLogin();
+        if(userGameID.isEmpty()){
+            throw new Exception("You are not connected to any games");
+        }
+        System.out.println("Are you sure you want to resign? (type 'yes' to confirm, anything else as no)");
+        System.out.printf("%s >>>>> ", status);
+        String line = "";
+        while(line.isEmpty()){
+            if(scanner.hasNextLine()){
+                line = scanner.nextLine();
+                if(line.equals("yes")){
+                    var body = Map.of("gameID", currentUserGame().gameID());
+                    HttpURLConnection http = sendRequest(url + "/game", "DELETE", new Gson().toJson(body), authToken);
+                    receiveResponse(http);
+                    userGameID = "";
+                    System.out.println("You have resigned");
+                    status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
+                }
+                else{
+                    System.out.println("No resignation, you will stay in the game");
+                }
+                break;
+            }
+        }
     }
 
     public void makeMove(String line) throws Exception{
-        // TODO: Implement
         checkLogin();
         checkGame();
         checkLength(line, 3, 4);
@@ -440,6 +458,8 @@ public class ServerFacade {
         HttpURLConnection http = sendRequest(url + "/game", "GET", "", authToken);
         var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
         GameData game = findGame(result, values[1]);
+        status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[OBSERVING]" + EscapeSequences.FULL_COLOR_RESET;
+        isObserving = true;
         printBoard(game.game().getBoard(), true);
     }
 

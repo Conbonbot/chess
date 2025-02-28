@@ -12,4 +12,5 @@ public record Request() {
     public record Delete() {}
     public record Auth(String authToken) {}
     public record UpdateGame(int gameID, ChessGame game) {}
+    public record DeleteGame(int gameID) {}
 }

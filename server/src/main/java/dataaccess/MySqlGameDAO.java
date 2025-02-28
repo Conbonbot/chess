@@ -111,6 +111,19 @@ public class MySqlGameDAO implements GameDAO{
     }
 
     @Override
+    public void deleteGame(int gameID) throws ResponseException{
+        var conn = DatabaseManager.getConnection();
+        var statement = "DELETE FROM game WHERE id = " + gameID;
+        try(var delete = conn.prepareStatement(statement)){
+            delete.executeUpdate();
+        }
+        catch(SQLException ex){
+            throw new ResponseException(500, ex.toString());
+        }
+
+    }
+
+    @Override
     public void clear() throws ResponseException{
         configureGameDatabase();
         var conn = DatabaseManager.getConnection();

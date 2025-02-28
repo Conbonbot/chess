@@ -62,7 +62,7 @@ public class ChessService {
         checkAuth(authToken);
         GameData game = gameAccess.getGame(joinGameRequest.gameID());
         String username = authAccess.getAuth(authToken).username();
-        switch (joinGameRequest.playerColor()) {
+        switch (joinGameRequest.playerColor().toUpperCase()) {
             case "WHITE" -> {
                 if(game != null && game.whiteUsername() == null){
                     gameAccess.updateGame(joinGameRequest.gameID(), username, null);
@@ -117,6 +117,11 @@ public class ChessService {
     public void updateGame(String authToken, Request.UpdateGame updateRequest) throws ResponseException{
         checkAuth(authToken); 
         gameAccess.updateGame(updateRequest.gameID(), updateRequest.game());
+    }
+
+    public void deleteGame(String authToken, Request.DeleteGame deleteRequest) throws ResponseException{
+        checkAuth(authToken);
+        gameAccess.deleteGame(deleteRequest.gameID());
     }
 
     private static String generateToken(){

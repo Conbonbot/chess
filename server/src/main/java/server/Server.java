@@ -48,6 +48,7 @@ public class Server {
         get("/game", this::listGames);
         post("/game", this::createGame);
         put("/game", this::joinGame);
+        delete("/game", this::deleteGame);
         delete("/db", this::clear);
         put("/update_game", this::updateGame);
         exception(ResponseException.class, this::exceptionHandler);
@@ -120,6 +121,13 @@ public class Server {
         String auth = req.headers("Authorization");
         var update = new Gson().fromJson(req.body(), Request.UpdateGame.class);
         chessService.updateGame(auth, update);
+        return "";
+    }
+
+    public Object deleteGame(spark.Request req, spark.Response res) throws ResponseException{
+        String auth = req.headers("Authorization");
+        var delete = new Gson().fromJson(req.body(), Request.DeleteGame.class);
+        chessService.deleteGame(auth, delete);
         return "";
     }
 
