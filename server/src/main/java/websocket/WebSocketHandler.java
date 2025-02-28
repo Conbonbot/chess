@@ -2,7 +2,6 @@ package websocket;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
@@ -14,7 +13,9 @@ import chess.ChessBoard;
 import chess.ChessGame;
 import chess.ChessGame.TeamColor;
 import chess.ChessMove;
+import chess.ChessPiece;
 import chess.ChessPosition;
+import chess.InvalidMoveException;
 import exception.ResponseException;
 import requests.Request;
 import service.ChessService;
@@ -53,6 +54,7 @@ public class WebSocketHandler{
             case LEAVE -> leave(commandMessage, session);
             case RESIGN -> resign(commandMessage, session);
             case REQUEST_BOARD -> sendBoard(new Gson().fromJson(message, RequestBoard.class), session);
+            case OBSERVE -> sendBoard(new Gson().fromJson(message, RequestBoard.class), session);
             case HIGHLIGHT -> highlightBoard(new Gson().fromJson(message, HighlightCommand.class), session);
             default -> throw new IOException("Invalid");
         }
@@ -76,7 +78,13 @@ public class WebSocketHandler{
 
     private void sendBoard(RequestBoard command, Session session) throws IOException, ResponseException{
         ChessBoard game = chessService.getBoard(command.getAuthToken(), command.getGameID());
-        LoadGameMessage message = new LoadGameMessage(LOAD_GAME, game, command.isWhite());
+        LoadGameMessage message;
+        if(command.getCommandType() == UserGameCommand.CommandType.OBSERVE){
+            message = new LoadGameMessage(LOAD_GAME, game, true);
+        }
+        else{
+            message = new LoadGameMessage(LOAD_GAME, game, command.isWhite());
+        }
         session.getRemote().sendString(new Gson().toJson(message));
     }
 
@@ -102,9 +110,33 @@ public class WebSocketHandler{
         session.getRemote().sendString(new Gson().toJson(message));
     }
 
-    private void makeMove(MakeMoveCommand command, Session session) throws IOException{
-        System.out.println("Move");
-        // TODO: implement
+    private void makeMove(MakeMoveCommand command, Session session) throws IOException, ResponseException{
+        ChessGame game = chessService.getGame(command.getAuthToken(), command.getGameID());
+        ChessBoard board = game.getBoard();
+        ChessPiece startPiece = board.getPiece(command.getMove().getStartPosition());
+        ErrorMessage message;
+        if(startPiece != null){
+            if(startPiece.getTeamColor() == (command.isWhite() ? TeamColor.WHITE : TeamColor.BLACK)){
+                try {
+                    game.makeMove(command.getMove());
+                    chessService.updateGame(command.getAuthToken(), command.getGameID(), game);
+                    LoadGameMessage newBoard = new LoadGameMessage(LOAD_GAME, board, command.isWhite());
+                    session.getRemote().sendString(new Gson().toJson(newBoard));
+                    return;
+                } catch (InvalidMoveException e) {
+                    // send error
+                    message = new ErrorMessage(ERROR, e.getMessage());
+                    session.getRemote().sendString(new Gson().toJson(message));
+                    return;
+                }
+            }
+            message = new ErrorMessage(ERROR, "This is not your piece");
+            session.getRemote().sendString(new Gson().toJson(message));
+            return;
+        }
+        message = new ErrorMessage(ERROR, "This piece does not exist");
+        session.getRemote().sendString(new Gson().toJson(message));
+
     }
 
     private void leave(UserGameCommand command, Session session) throws IOException{

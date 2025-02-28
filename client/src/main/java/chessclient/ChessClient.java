@@ -17,7 +17,6 @@ import com.google.gson.Gson;
 
 import chess.ChessBoard;
 import chess.ChessGame;
-import chess.ChessGame.TeamColor;
 import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessPosition;
@@ -61,7 +60,6 @@ public class ChessClient implements ServerMessageObserver{
         scanner = new Scanner(System.in);
     }
     
-    // Websocket TODO:
 
     @Override
     public void message(ServerMessage message, String strMessage){
@@ -92,7 +90,7 @@ public class ChessClient implements ServerMessageObserver{
         printStatus();
     }
 
-    private void highlightPing(HighlightMessage message){ // TODO: implement
+    private void highlightPing(HighlightMessage message){
         printBoard(message.getBoard(), isWhite, message.getPos(), message.getLocations());
         printStatus();
     }
@@ -455,8 +453,6 @@ public class ChessClient implements ServerMessageObserver{
                         gamesList.get(i).whiteUsername(), gamesList.get(i).blackUsername());
         }
         
-
-        
     }
 
     public void joinGame(String line) throws NumberFormatException, Exception{
@@ -473,8 +469,13 @@ public class ChessClient implements ServerMessageObserver{
 
     public void leaveGame(String line) throws Exception{
         checkLogin();
-        ws = new WebSocketFacade(url, this);
-        ws.leave(authToken, userGameID);
+        if(status == Status.OBSERVING){
+            status = Status.LOGGED_IN;
+        }
+        else{
+            ws = new WebSocketFacade(url, this);
+            ws.leave(authToken, userGameID);
+        }
         System.out.println("Leaving game...");
         userGameID = "";
         status = Status.LOGGED_IN;
@@ -505,9 +506,18 @@ public class ChessClient implements ServerMessageObserver{
 
     public void makeMove(String line) throws Exception{
         checkLogin();
-        checkGame();
         checkLength(line, 3, 4);
         var values = line.split(" ");
+        ws = new WebSocketFacade(url, this);
+        ChessMove move;
+        if(values.length == 3){
+            move = new ChessMove(locationToPosition(values[1]), locationToPosition(values[2]));
+        }
+        else{
+            move = new ChessMove(locationToPosition(values[1]), locationToPosition(values[2]), toPromotion(values[3]));
+        }
+        ws.makeMove(authToken, userGameID, isWhite, move);
+        /*
         ChessPosition pos = locationToPosition(values[1]);
         GameData gameData = currentUserGame();
         ChessGame game = gameData.game();
@@ -543,6 +553,7 @@ public class ChessClient implements ServerMessageObserver{
         HttpURLConnection http = sendRequest(url + "/update_game", "PUT", new Gson().toJson(body), authToken);
         receiveResponse(http);
         // TODO: websocket
+         */
     }
 
 
@@ -568,15 +579,10 @@ public class ChessClient implements ServerMessageObserver{
     public void observeGame(String line) throws Exception{
         checkLogin();
         checkLength(line, 2);
-        var values = line.split(" ");
-        HttpURLConnection http = sendRequest(url + "/game", "GET", "", authToken);
-        var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
-        GameData game = findGame(result, values[1]);
+        // websocket
+        ws = new WebSocketFacade(url, this);
+        ws.observe(authToken, line.split(" ")[1]);
         status = Status.OBSERVING;
-        isObserving = true;
-        printBoard(game.game().getBoard(), true);
-        // TODO: Websocket
-        
     }
 
     private HttpURLConnection sendRequest(String url, String method, String body) throws URISyntaxException, IOException {
@@ -729,7 +735,7 @@ public class ChessClient implements ServerMessageObserver{
         }
         else{
             if(init.equals(new ChessPosition(arrayToRow(i), arrayToCol(j)))){
-                System.out.printf("%s%s%s", EscapeSequences.SET_BG_COLOR_YELLOW,
+                System.out.printf("%s%s%s", EscapeSequences.SET_BG_COLOR_GREEN,
                     validPiece.test(piece) ? pieceChar(piece) : EscapeSequences.EMPTY, 
                     EscapeSequences.FULL_COLOR_RESET);
             }
@@ -811,27 +817,6 @@ public class ChessClient implements ServerMessageObserver{
     }
 
 
-    /**
-     * finds the game associated with a certain game ID
-     * @param httpResponse JSON response from the server
-     * @param gameID String input from the user
-     * @return Game if found, null if doesn't exist
-     */
-    private GameData findGame(Object httpResponse, String gameID) throws Exception{
-        var result = new Gson().fromJson(httpResponse.toString(), Map.class);
-        var res = new Gson().fromJson(result.get("games").toString(), ArrayList.class);
-        int id = Integer.parseInt(gameID);
-        if(id < 1){
-            throw new Exception("ID must be greater than 0");
-        }
-        for(int i = 0; i < res.size(); i++){
-            GameData game = new Gson().fromJson(res.get(i).toString(), GameData.class);
-            if(game.gameID() == id){
-                return game;
-            }
-        }
-        throw new Exception("No game exists with id " + gameID);
-    }
 
     private void validMove(Collection<ChessMove> moves, ChessMove pos) throws Exception{
         for(ChessMove move : moves){
@@ -843,7 +828,7 @@ public class ChessClient implements ServerMessageObserver{
     }
 
     private ChessPiece.PieceType toPromotion(String promotion){
-        return switch(promotion){
+        return switch(promotion.toLowerCase()){
             case "bishop" -> ChessPiece.PieceType.BISHOP;
             case "rook" -> ChessPiece.PieceType.ROOK;
             case "knight" -> ChessPiece.PieceType.KNIGHT;

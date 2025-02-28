@@ -138,6 +138,11 @@ public class ChessService {
         return game.game();
     }
 
+    // update a game from the websocket
+    public void updateGame(String authToken, int gameID, ChessGame game) throws ResponseException{
+        checkAuth(authToken); 
+        gameAccess.updateGame(gameID, game);
+    }
 
     private static String generateToken(){
         return UUID.randomUUID().toString();

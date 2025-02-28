@@ -14,6 +14,7 @@ import javax.websocket.WebSocketContainer;
 
 import com.google.gson.Gson;
 
+import chess.ChessMove;
 import chess.ChessPosition;
 import exception.ResponseException;
 import websocket.commands.ConnectCommand;
@@ -71,8 +72,9 @@ public class WebSocketFacade extends Endpoint{
         }
     }
 
-    public void makeMove(MakeMoveCommand command) throws ResponseException{
-        
+    public void makeMove(String authToken, String gameID, boolean isWhite, ChessMove move) throws ResponseException, IOException{
+        var moveReq = new MakeMoveCommand(CommandType.MAKE_MOVE, authToken, Integer.valueOf(gameID), isWhite, move);
+        this.session.getBasicRemote().sendText(new Gson().toJson(moveReq));
     }
 
     public void highlight(String authToken, String gameID, ChessPosition pos, boolean isWhite) throws Exception{
@@ -88,6 +90,16 @@ public class WebSocketFacade extends Endpoint{
     public void resign(String authToken, String gameID) throws IOException, ResponseException{
         var resign = new UserGameCommand(CommandType.RESIGN, authToken, Integer.valueOf(gameID));
         this.session.getBasicRemote().sendText(new Gson().toJson(resign));
+    }
+
+    public void observe(String authToken, String gameID) throws IOException, ResponseException{
+        try{
+            var observe = new RequestBoard(CommandType.OBSERVE, authToken, Integer.valueOf(gameID), true);
+            this.session.getBasicRemote().sendText(new Gson().toJson(observe));
+        }
+        catch(NumberFormatException ex){
+            throw new ResponseException(400, "Error: bad request");
+        }
     }
 
 

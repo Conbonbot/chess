@@ -28,7 +28,8 @@ public class UserGameCommand {
         LEAVE,
         RESIGN,
         REQUEST_BOARD,
-        HIGHLIGHT
+        HIGHLIGHT,
+        OBSERVE
     }
 
     public CommandType getCommandType() {
