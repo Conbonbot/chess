@@ -6,6 +6,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.function.Predicate;
@@ -16,7 +17,9 @@ import com.google.gson.Gson;
 
 import chess.ChessBoard;
 import chess.ChessGame;
+import chess.ChessMove;
 import chess.ChessPiece;
+import chess.ChessPosition;
 import model.GameData;
 import ui.EscapeSequences;
 
@@ -28,6 +31,7 @@ public class ServerFacade {
     private final String url;
     private String authToken = "";
     private String username = "";
+    private boolean isWhite;
     private String userGameID = "";
 
     private void init(){
@@ -156,10 +160,10 @@ public class ServerFacade {
     }
 
     private void checkMove(String location) throws Exception{
-        Pattern pattern = Pattern.compile("[a-h][0-9]", Pattern.CASE_INSENSITIVE);
+        Pattern pattern = Pattern.compile("[a-h][1-9]", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(location);
         if(!matcher.find()){
-            throw new Exception(location + " does not appear on the chess board. The format is [a-h][0-9] (e.g. a5, g1)");
+            throw new Exception("'" + location + "' does not appear on the chess board. The format is [a-h][1-9] (e.g. a5, g1)");
         }
     }
 
@@ -297,7 +301,10 @@ public class ServerFacade {
         checkLength(line,3);
         var values = line.split(" ");
         int gameID = Integer.parseInt(values[1]);
-        if(values[2].equals("WHITE") || values[2].equals("BLACK")){
+        if(!userGameID.isEmpty()){
+            throw new Exception("You are already connected to a game");
+        }
+        if(values[2].toLowerCase().equals("white") || values[2].toLowerCase().equals("black")){
             // See if game already exists, and can be added to
             ArrayList<GameData> userGames = userGamesAsList();
             for(GameData game : userGames){
@@ -305,7 +312,9 @@ public class ServerFacade {
                     if(game.whiteUsername() != null && game.whiteUsername().equals(username)
                     || game.blackUsername() != null && game.blackUsername().equals(username)){
                         userGameID = values[1];
+                        isWhite = values[2].toLowerCase().equals("white");
                         System.out.printf("You have joined this game%n");
+                        redrawBoard("redraw");
                         return;
                     }
                 }
@@ -319,6 +328,7 @@ public class ServerFacade {
             var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
             GameData game = findGame(result, values[1]);
             userGameID = values[1];
+            isWhite = values[2].toLowerCase().equals("white");
             printBoard(game.game().getBoard(), values[2].equals("WHITE"));
             System.out.printf("^ This is your side ^%n");
         }
@@ -330,6 +340,7 @@ public class ServerFacade {
 
     public void leaveGame(String line) throws Exception{
         // TODO: Implement
+        userGameID = "";
     }
 
     public void resign() throws Exception{
@@ -341,12 +352,24 @@ public class ServerFacade {
     }
 
     public void highlightMoves(String line) throws Exception{
-        // TODO: Implement 
         checkLogin();
         checkGame();
         checkLength(line, 2);
-        String move = line.split(" ")[1];
-        checkMove(move);
+        ChessPosition pos = locationToPosition(line.split(" ")[1]);
+        GameData gameData = currentUserGame();
+        ChessGame game = gameData.game();
+        Collection<ChessMove> moves;
+        try{
+            moves = game.validMoves(pos);
+        }
+        catch(NullPointerException ex){
+            throw new Exception("That square is empty.");
+        }
+        ArrayList<ChessPosition> possibleLocations = new ArrayList<>();
+        for(ChessMove move : moves){
+            possibleLocations.add(move.getEndPosition());
+        }
+        printBoard(game.getBoard(), isWhite, pos, possibleLocations);
 
 
     }
@@ -357,12 +380,7 @@ public class ServerFacade {
         checkGame();
 
         GameData game = currentUserGame();
-        if(game.whiteUsername() != null){
-            printBoard(game.game().getBoard(), game.whiteUsername().equals(username));
-        }
-        else if(game.blackUsername() != null){
-            printBoard(game.game().getBoard(), !game.blackUsername().equals(username));
-        }
+        printBoard(game.game().getBoard(), isWhite);
     }
 
     public void observeGame(String line) throws Exception{
@@ -424,8 +442,7 @@ public class ServerFacade {
         return responseBody;
     }
 
-    private void printBoard(ChessBoard board, boolean white){
-        
+    private void printBoard(ChessBoard board, boolean white) throws Exception{
         ChessPiece[][] pieces = board.getBoard();
         boolean whiteBackground = true;
         if(white){
@@ -457,6 +474,38 @@ public class ServerFacade {
 
     }
 
+    private void printBoard(ChessBoard board, boolean white, ChessPosition init, ArrayList<ChessPosition> moves) throws Exception{
+        ChessPiece[][] pieces = board.getBoard();
+        boolean whiteBackground = true;
+        if(white){
+            printLetters(false);
+            for(int i = 0; i < 8; i++){
+                System.out.print(8-i + " ");
+                for(int j = 0; j < 8; j++){
+                    // Change background color
+                    printPiece(pieces[i][j], i, j, whiteBackground, init, moves);
+                    whiteBackground = !whiteBackground;
+                }
+                System.out.printf(" %d%n", 8-i);
+                whiteBackground = !whiteBackground;
+            }
+            printLetters(false);
+        }
+        else{
+            printLetters(true);
+            for(int i = 7; i >= 0; i--){
+                System.out.print(8-i + " ");
+                for(int j = 7; j >= 0; j--){
+                    printPiece(pieces[i][j], i, j, whiteBackground, init, moves);
+                    whiteBackground = !whiteBackground;
+                }
+                System.out.printf(" %d%n", 8-i);
+                whiteBackground = !whiteBackground;
+            }
+            printLetters(true);
+        }
+    }
+
     private void printLetters(boolean reverse){
         String[] pos = {"a", "b", "c", "d", "e", "f", "g", "h"};
         System.out.print(" ");
@@ -473,7 +522,45 @@ public class ServerFacade {
         System.out.println("");
     }
 
-    private void printPiece(ChessPiece piece, boolean whiteBackground){
+    private void printPiece(ChessPiece piece, int i, int j, boolean whiteBackground, ChessPosition init, ArrayList<ChessPosition> moves) throws Exception{
+        Predicate<ChessPiece> validPiece = x -> x != null;
+        if(whiteBackground){
+            if(init.equals(new ChessPosition(arrayToRow(i), arrayToCol(j)))){
+                System.out.printf("%s%s%s", EscapeSequences.SET_BG_COLOR_GREEN,
+                    validPiece.test(piece) ? pieceChar(piece) : EscapeSequences.EMPTY, 
+                    EscapeSequences.FULL_COLOR_RESET);
+            }
+            else if(moves.contains(new ChessPosition(arrayToRow(i), arrayToCol(j)))){
+                System.out.printf("%s%s%s", EscapeSequences.SET_BG_COLOR_YELLOW,
+                    validPiece.test(piece) ? pieceChar(piece) : EscapeSequences.EMPTY, 
+                    EscapeSequences.FULL_COLOR_RESET);
+            }
+            else{
+                System.out.printf("%s%s%s", EscapeSequences.SET_BG_COLOR_WHITE,
+                    validPiece.test(piece) ? pieceChar(piece) : EscapeSequences.EMPTY, 
+                    EscapeSequences.FULL_COLOR_RESET);
+            }
+        }
+        else{
+            if(init.equals(new ChessPosition(arrayToRow(i), arrayToCol(j)))){
+                System.out.printf("%s%s%s", EscapeSequences.SET_BG_COLOR_YELLOW,
+                    validPiece.test(piece) ? pieceChar(piece) : EscapeSequences.EMPTY, 
+                    EscapeSequences.FULL_COLOR_RESET);
+            }
+            else if(moves.contains(new ChessPosition(arrayToRow(i), arrayToCol(j)))){
+                System.out.printf("%s%s%s", EscapeSequences.SET_BG_COLOR_YELLOW,
+                    validPiece.test(piece) ? pieceChar(piece) : EscapeSequences.EMPTY, 
+                    EscapeSequences.FULL_COLOR_RESET);
+            }
+            else{
+                System.out.printf("%s%s%s", EscapeSequences.SET_BG_COLOR_BLACK,
+                    validPiece.test(piece) ? pieceChar(piece) : EscapeSequences.EMPTY, 
+                    EscapeSequences.FULL_COLOR_RESET);
+            }
+        }
+    }
+
+    private void printPiece(ChessPiece piece, boolean whiteBackground) throws Exception{
         Predicate<ChessPiece> validPiece = x -> x != null;
         if(whiteBackground){
             System.out.printf("%s%s%s", EscapeSequences.SET_BG_COLOR_WHITE,
@@ -543,7 +630,6 @@ public class ServerFacade {
         HttpURLConnection http = sendRequest(url + "/game", "GET", "", authToken);
         var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
         var res = new Gson().fromJson(result.get("games").toString(), ArrayList.class);
-        ArrayList<GameData> currentGames = new ArrayList<>();
         for(int i = 0; i < res.size(); i++){
             GameData game = new Gson().fromJson(res.get(i).toString(), GameData.class);
             if(game.gameID() == Integer.parseInt(userGameID)){
@@ -576,6 +662,42 @@ public class ServerFacade {
         throw new Exception("No game exists with id " + gameID);
     }
 
+    private ChessPosition locationToPosition(String location) throws Exception{
+        checkMove(location);
+        // a 2 -> row 2, col 1
+        // col, row
+        char let = location.charAt(0);
+        char row = location.charAt(1);
+        int col = switch(let){
+            case 'a' -> 1;
+            case 'b' -> 2;
+            case 'c' -> 3;
+            case 'd' -> 4;
+            case 'e' -> 5;
+            case 'f' -> 6;
+            case 'g' -> 7;
+            case 'h' -> 8;
+            default -> throw new Exception("Invalid input");
+        };
+        return new ChessPosition(row-'0', col);
+    }
+
+    private int rowToArray(int row){
+        return 8-row;
+    }
+
+    private int arrayToRow(int i){
+        return 8-i;
+    }
+
+    private int colToArray(int col){
+        return col-1;
+    }
+
+    private int arrayToCol(int j){
+        return j+1;
+    }
+
     // This is used for testing purposes
     public void resetDatabase(){
         try{
@@ -587,5 +709,6 @@ public class ServerFacade {
         }
 
     }
+
 
 }
