@@ -17,6 +17,7 @@ import com.google.gson.Gson;
 
 import chess.ChessBoard;
 import chess.ChessGame;
+import chess.ChessGame.TeamColor;
 import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessPosition;
@@ -144,6 +145,12 @@ public class ServerFacade {
         }
     }
 
+    private void checkLength(String line, int lower, int upper) throws Exception{
+        if(line.split(" ").length < lower || line.split(" ").length > upper){
+            throw new Exception("The format is incorrect, use the command 'help' to show correct format");
+        }
+    }
+
     private void checkGame() throws Exception{
         if(userGameID.isEmpty()){
             ArrayList<GameData> userGames = userGamesAsList();
@@ -199,7 +206,8 @@ public class ServerFacade {
             System.out.printf("\t%sleave %s- leave the current chess game%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-            System.out.printf("\t%smove <START> <END> %s- moves a chess piece from start to end location%s%n",
+            System.out.printf("\t%smove <START> <END> <PROMOTION?>%s- moves a chess piece from start to end location." +
+                    "For pawns, include the promotion rank (queen, knight, rook, bishop) %s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
             System.out.printf("\t%sresign %s- Forfeit the game%s%n",
@@ -313,6 +321,7 @@ public class ServerFacade {
                     || game.blackUsername() != null && game.blackUsername().equals(username)){
                         userGameID = values[1];
                         isWhite = values[2].toLowerCase().equals("white");
+                        status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[IN_GAME]" + EscapeSequences.FULL_COLOR_RESET;
                         System.out.printf("You have joined this game%n");
                         redrawBoard("redraw");
                         return;
@@ -329,6 +338,7 @@ public class ServerFacade {
             GameData game = findGame(result, values[1]);
             userGameID = values[1];
             isWhite = values[2].toLowerCase().equals("white");
+            status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[IN_GAME]" + EscapeSequences.FULL_COLOR_RESET;
             printBoard(game.game().getBoard(), values[2].equals("WHITE"));
             System.out.printf("^ This is your side ^%n");
         }
@@ -341,6 +351,7 @@ public class ServerFacade {
     public void leaveGame(String line) throws Exception{
         // TODO: Implement
         userGameID = "";
+        status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
     }
 
     public void resign() throws Exception{
@@ -349,7 +360,46 @@ public class ServerFacade {
 
     public void makeMove(String line) throws Exception{
         // TODO: Implement
+        checkLogin();
+        checkGame();
+        checkLength(line, 3, 4);
+        var values = line.split(" ");
+        ChessPosition pos = locationToPosition(values[1]);
+        GameData gameData = currentUserGame();
+        ChessGame game = gameData.game();
+        ChessPiece piece = game.getBoard().getPiece(pos);
+        Collection<ChessMove> moves;
+        ChessGame.TeamColor pieceColor;
+        try{
+            pieceColor = game.getBoard().getPiece(pos).getTeamColor();
+            if(pieceColor == ChessGame.TeamColor.WHITE && !isWhite
+            || pieceColor == ChessGame.TeamColor.BLACK && isWhite){
+                throw new Exception("That piece is not yours.");
+            }
+            moves = game.validMoves(pos);
+        }
+        catch(NullPointerException ex){
+            throw new Exception("That square is empty.");
+        }
+        // check team turn
+        if(game.getTeamTurn() == TeamColor.WHITE && !isWhite
+        || game.getTeamTurn() == TeamColor.BLACK && isWhite){
+            throw new Exception("It is not your turn");
+        }
+        // check pawn promotion
+        if(piece.getPieceType() != ChessPiece.PieceType.PAWN && line.split(" ").length == 4){
+            throw new Exception("Invalid promotion move");
+        }
+        var promotion = (line.split(" ").length == 4) ? line.split(" ")[3] : "";
+        ChessMove move = new ChessMove(pos, locationToPosition(values[2]), toPromotion(promotion));
+        validMove(moves, move);
+        game.makeMove(move);
+        // send data to server
+        var body = Map.of("gameID", gameData.gameID(), "game", game);
+        HttpURLConnection http = sendRequest(url + "/update_game", "PUT", new Gson().toJson(body), authToken);
+        receiveResponse(http);
     }
+
 
     public void highlightMoves(String line) throws Exception{
         checkLogin();
@@ -662,6 +712,25 @@ public class ServerFacade {
         throw new Exception("No game exists with id " + gameID);
     }
 
+    private void validMove(Collection<ChessMove> moves, ChessMove pos) throws Exception{
+        for(ChessMove move : moves){
+            if(move.equals(pos)){
+                return;
+            }
+        }
+        throw new Exception("That is not a valid move.");
+    }
+
+    private ChessPiece.PieceType toPromotion(String promotion){
+        return switch(promotion){
+            case "bishop" -> ChessPiece.PieceType.BISHOP;
+            case "rook" -> ChessPiece.PieceType.ROOK;
+            case "knight" -> ChessPiece.PieceType.KNIGHT;
+            case "queen" -> ChessPiece.PieceType.QUEEN;
+            default -> null;
+        };
+    }
+
     private ChessPosition locationToPosition(String location) throws Exception{
         checkMove(location);
         // a 2 -> row 2, col 1
@@ -682,16 +751,9 @@ public class ServerFacade {
         return new ChessPosition(row-'0', col);
     }
 
-    private int rowToArray(int row){
-        return 8-row;
-    }
 
     private int arrayToRow(int i){
         return 8-i;
-    }
-
-    private int colToArray(int col){
-        return col-1;
     }
 
     private int arrayToCol(int j){

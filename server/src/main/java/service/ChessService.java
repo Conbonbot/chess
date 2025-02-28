@@ -65,7 +65,7 @@ public class ChessService {
         switch (joinGameRequest.playerColor()) {
             case "WHITE" -> {
                 if(game != null && game.whiteUsername() == null){
-                    gameAccess.updateGame(joinGameRequest.gameID(), authAccess.getAuth(authToken).username(), null);
+                    gameAccess.updateGame(joinGameRequest.gameID(), username, null);
                 }
                 else{
                     throw new ResponseException(403, "Error: already taken");
@@ -73,7 +73,7 @@ public class ChessService {
             }
             case "BLACK" -> {
                 if(game != null && game.blackUsername() == null){
-                    gameAccess.updateGame(joinGameRequest.gameID(), null, authAccess.getAuth(authToken).username());
+                    gameAccess.updateGame(joinGameRequest.gameID(), null, username);
                 }
                 else{
                     throw new ResponseException(403, "Error: already taken");
@@ -112,6 +112,11 @@ public class ChessService {
     public void logout(Request.Logout logoutRequest) throws ResponseException{
         AuthData authData = authAccess.getAuth(logoutRequest.authToken());
         authAccess.removeAuthData(authData); 
+    }
+
+    public void updateGame(String authToken, Request.UpdateGame updateRequest) throws ResponseException{
+        checkAuth(authToken); 
+        gameAccess.updateGame(updateRequest.gameID(), updateRequest.game());
     }
 
     private static String generateToken(){

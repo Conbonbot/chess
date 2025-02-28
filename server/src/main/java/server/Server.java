@@ -49,6 +49,7 @@ public class Server {
         post("/game", this::createGame);
         put("/game", this::joinGame);
         delete("/db", this::clear);
+        put("/update_game", this::updateGame);
         exception(ResponseException.class, this::exceptionHandler);
 
         //This line initializes the server and can be removed once you have a functioning endpoint 
@@ -113,6 +114,13 @@ public class Server {
         chessService.joinGame(auth, join);
         return "";
         
+    }
+
+    public Object updateGame(spark.Request req, spark.Response res) throws ResponseException{
+        String auth = req.headers("Authorization");
+        var update = new Gson().fromJson(req.body(), Request.UpdateGame.class);
+        chessService.updateGame(auth, update);
+        return "";
     }
 
     

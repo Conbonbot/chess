@@ -99,6 +99,18 @@ public class MySqlGameDAO implements GameDAO{
     }
 
     @Override
+    public void updateGame(int gameID, ChessGame gameNew) throws ResponseException{
+        var conn = DatabaseManager.getConnection();
+        var statement = "UPDATE game SET game = '" + new Gson().toJson(gameNew) + "' WHERE id = " + gameID;
+        try(var update = conn.prepareStatement(statement)){
+            update.executeUpdate();
+        }
+        catch(SQLException ex){
+            throw new ResponseException(500, ex.toString());
+        }
+    }
+
+    @Override
     public void clear() throws ResponseException{
         configureGameDatabase();
         var conn = DatabaseManager.getConnection();
