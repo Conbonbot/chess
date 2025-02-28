@@ -1,6 +1,7 @@
 package service;
 import java.util.UUID;
 
+import chess.ChessBoard;
 import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
 import dataaccess.MySqlAuthDAO;
@@ -56,7 +57,7 @@ public class ChessService {
     }
 
     public void joinGame(String authToken, Request.JoinGame joinGameRequest) throws ResponseException{
-        if(joinGameRequest.playerColor() == null || joinGameRequest.playerColor().isEmpty() || joinGameRequest.gameID() == 0){
+        if(joinGameRequest.playerColor() == null || joinGameRequest.playerColor().isEmpty() || joinGameRequest.gameID() < 1){
             throw new ResponseException(400, "Error: bad request");
         }
         checkAuth(authToken);
@@ -122,6 +123,12 @@ public class ChessService {
     public void deleteGame(String authToken, Request.DeleteGame deleteRequest) throws ResponseException{
         checkAuth(authToken);
         gameAccess.deleteGame(deleteRequest.gameID());
+    }
+
+    // get a chess board
+    public ChessBoard getBoard(String authToken, int gameID) throws ResponseException{
+        GameData game = gameAccess.getGame(gameID);
+        return game.game().getBoard();
     }
 
     private static String generateToken(){

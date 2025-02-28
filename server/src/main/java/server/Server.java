@@ -15,10 +15,12 @@ import static spark.Spark.exception;
 import static spark.Spark.get;
 import static spark.Spark.post;
 import static spark.Spark.put;
+import websocket.WebSocketHandler;
 
 
 public class Server {
     private final ChessService chessService;
+    private final WebSocketHandler webSocketHandler;
 
     public Server(){
         ChessService serv;
@@ -29,10 +31,12 @@ public class Server {
             serv = new ChessService(new MemoryAuthDAO(), new MemoryGameDAO(), new MemoryUserDAO());
         }
         chessService = serv;
+        this.webSocketHandler = new WebSocketHandler(chessService);
     }
 
     public Server(ChessService chessService){
         this.chessService = chessService;
+        this.webSocketHandler = new WebSocketHandler(chessService);
     }
 
 
@@ -40,6 +44,8 @@ public class Server {
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");
+
+        Spark.webSocket("/ws", webSocketHandler);
 
         // Register your endpoints and handle exceptions here.
         post("/user", this::register);
@@ -130,6 +136,8 @@ public class Server {
         chessService.deleteGame(auth, delete);
         return "";
     }
+
+
 
     
 

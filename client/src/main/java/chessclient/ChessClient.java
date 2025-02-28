@@ -1,4 +1,4 @@
-package serverfacade;
+package chessclient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -23,8 +23,14 @@ import chess.ChessPiece;
 import chess.ChessPosition;
 import model.GameData;
 import ui.EscapeSequences;
+import websocket.ServerMessageObserver;
+import websocket.WebSocketFacade;
+import websocket.messages.ErrorMessage;
+import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationMessage;
+import websocket.messages.ServerMessage;
 
-public class ServerFacade {
+public class ChessClient implements ServerMessageObserver{
 
     private Scanner scanner;
     private String status = EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
@@ -35,6 +41,9 @@ public class ServerFacade {
     private boolean isWhite;
     private boolean isObserving = false;
     private String userGameID = "";
+    // websocket
+    private WebSocketFacade ws;
+    private Status statusReal = Status.LOGGED_OUT;
 
     private void init(){
         System.out.printf("%s%s Welcome to 240 Chess. Type Help to get started %s%n", 
@@ -46,16 +55,51 @@ public class ServerFacade {
         scanner = new Scanner(System.in);
     }
 
-    public ServerFacade(int port){
+    public ChessClient(int port){
         url = "http://localhost:" + port;
         scanner = new Scanner(System.in);
+    }
+
+    @Override
+    public void message(ServerMessage message, String strMessage){
+        switch(message.getServerMessageType()){
+            case LOAD_GAME -> loadGame(new Gson().fromJson(strMessage, LoadGameMessage.class));
+            case ERROR -> error(new Gson().fromJson(strMessage, ErrorMessage.class));
+            case NOTIFICATION -> notification(new Gson().fromJson(strMessage, NotificationMessage.class));
+            case SUCCESS -> printStatus();
+        };
+        
+    }
+
+    private void loadGame(LoadGameMessage message) {
+        printBoard(message.getBoard(), message.isWhite());
+        
+    }
+
+    private void error(ErrorMessage message) {
+        System.out.printf("%s%s%s%n", EscapeSequences.SET_TEXT_COLOR_RED,
+            message.getErrorMessage(),
+            EscapeSequences.FULL_COLOR_RESET);
+        
+    }
+
+    private void notification(NotificationMessage message) {
+        System.out.printf("%n-----%sNotification: %s%s%n-----%n",
+            EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY,
+            message.getNotification(),
+            EscapeSequences.FULL_COLOR_RESET);
+        
+    }
+
+    private void printStatus(){
+        System.out.printf("%s >>> ", status);
     }
 
     public void run(){
         init();
         String line = "";
+        printStatus();
         while (!line.toLowerCase().equals("quit")) {
-            System.out.printf("%s >>> ", status);
             if(console && scanner.hasNextLine()) {
                 line = scanner.nextLine();
                 try{
@@ -93,6 +137,7 @@ public class ServerFacade {
                 }
                 catch(Exception ex){
                     exceptionHandler(ex);
+                    
                 }
             }
             else{
@@ -135,7 +180,7 @@ public class ServerFacade {
     }
 
     private void checkLogin() throws Exception{
-        if(username.equals("")){
+        if(authToken.isEmpty()){
             throw new Exception("You must log in to use that command.\n");
         }
     }
@@ -244,6 +289,8 @@ public class ServerFacade {
         username = values[1];
         status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
         System.out.printf("Welcome back %s!%n", values[1]);
+
+        
     }
 
     public void register(String line) throws Exception{
@@ -256,6 +303,8 @@ public class ServerFacade {
         username = values[1];
         status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
         System.out.printf("Welcome to chess! use the command 'help' to show commands!%n");
+
+        
     }
 
     // Postlogin
@@ -265,7 +314,10 @@ public class ServerFacade {
         HttpURLConnection http = sendRequest(url + "/session", "DELETE", "", authToken);
         receiveResponse(http);
         username = "";
+        authToken = "";
         status = EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
+
+        
     }
 
     public void createGame(String line) throws Exception{
@@ -276,6 +328,8 @@ public class ServerFacade {
         HttpURLConnection http = sendRequest(url + "/game", "POST", new Gson().toJson(body), authToken);
         receiveResponse(http);
         System.out.printf("The game '%s' has been created!%n", gameName);
+
+        
 
     }
 
@@ -288,6 +342,7 @@ public class ServerFacade {
             System.out.printf("There are currently no active games%nUse the command '%screate <NAME>%s' to start one!%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE,
                     EscapeSequences.FULL_COLOR_RESET);
+            
             return;
         }
         System.out.printf("Below are the current games\n");
@@ -295,58 +350,29 @@ public class ServerFacade {
             System.out.printf("ID: %d | game: %s | white: %s | black: %s\n", gamesList.get(i).gameID(), gamesList.get(i).gameName(),
                         gamesList.get(i).whiteUsername(), gamesList.get(i).blackUsername());
         }
+
+        
     }
 
     public void joinGame(String line) throws NumberFormatException, Exception{
-        checkLogin();
         checkLength(line,3);
         var values = line.split(" ");
-        int gameID = Integer.parseInt(values[1]);
-        if(!userGameID.isEmpty()){
-            throw new Exception("You are already connected to a game");
-        }
-        if(values[2].toLowerCase().equals("white") || values[2].toLowerCase().equals("black")){
-            // See if game already exists, and can be added to
-            ArrayList<GameData> userGames = userGamesAsList();
-            for(GameData game : userGames){
-                if(game.gameID() == Integer.parseInt(values[1])){
-                    if(game.whiteUsername() != null && game.whiteUsername().equals(username)
-                    || game.blackUsername() != null && game.blackUsername().equals(username)){
-                        userGameID = values[1];
-                        isWhite = values[2].toLowerCase().equals("white");
-                        status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[IN_GAME]" + EscapeSequences.FULL_COLOR_RESET;
-                        System.out.printf("You have joined this game%n");
-                        redrawBoard("redraw");
-                        return;
-                    }
-                }
-            }
-            // Not 
-            var body = Map.of("playerColor", values[2], "gameID", gameID);
-            HttpURLConnection http = sendRequest(url + "/game", "PUT", new Gson().toJson(body), authToken);
-            receiveResponse(http);
-            System.out.printf("Congrats on joining a game%nBelow is the board%n");
-            http = sendRequest(url + "/game", "GET", "", authToken);
-            var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
-            GameData game = findGame(result, values[1]);
-            userGameID = values[1];
-            isWhite = values[2].toLowerCase().equals("white");
-            status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[IN_GAME]" + EscapeSequences.FULL_COLOR_RESET;
-            printBoard(game.game().getBoard(), values[2].equals("WHITE"));
-            System.out.printf("^ This is your side ^%n");
-        }
-        else{
-            throw new Exception("type must be either 'WHITE' OR 'BLACK'");
-        }
+        ws = new WebSocketFacade(url, this);
+        ws.connect(authToken, values[1], values[2]);
+        // wait for response
+        status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[IN_GAME]" + EscapeSequences.FULL_COLOR_RESET;
+        statusReal = Status.IN_GAME;
+        userGameID = values[1];
     }
 
 
     public void leaveGame(String line) throws Exception{
         checkLogin();
-        checkGame();
-        System.out.printf("Leaving game...%n");
+        ws = new WebSocketFacade(url, this);
+        ws.leave(authToken, userGameID);
+        System.out.println("Leaving game...");
         userGameID = "";
-        isObserving = false;
+        statusReal = Status.LOGGED_IN;
         status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
     }
 
@@ -362,9 +388,8 @@ public class ServerFacade {
             if(scanner.hasNextLine()){
                 line = scanner.nextLine();
                 if(line.equals("yes")){
-                    var body = Map.of("gameID", currentUserGame().gameID());
-                    HttpURLConnection http = sendRequest(url + "/game", "DELETE", new Gson().toJson(body), authToken);
-                    receiveResponse(http);
+                    ws = new WebSocketFacade(url, this);
+                    ws.resign(authToken, userGameID);
                     userGameID = "";
                     System.out.println("You have resigned");
                     status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
@@ -375,6 +400,7 @@ public class ServerFacade {
                 break;
             }
         }
+        // TODO: websocket
     }
 
     public void makeMove(String line) throws Exception{
@@ -416,6 +442,7 @@ public class ServerFacade {
         var body = Map.of("gameID", gameData.gameID(), "game", game);
         HttpURLConnection http = sendRequest(url + "/update_game", "PUT", new Gson().toJson(body), authToken);
         receiveResponse(http);
+        // TODO: websocket
     }
 
 
@@ -512,7 +539,7 @@ public class ServerFacade {
         return responseBody;
     }
 
-    private void printBoard(ChessBoard board, boolean white) throws Exception{
+    private void printBoard(ChessBoard board, boolean white){
         ChessPiece[][] pieces = board.getBoard();
         boolean whiteBackground = true;
         if(white){
@@ -544,7 +571,7 @@ public class ServerFacade {
 
     }
 
-    private void printBoard(ChessBoard board, boolean white, ChessPosition init, ArrayList<ChessPosition> moves) throws Exception{
+    private void printBoard(ChessBoard board, boolean white, ChessPosition init, ArrayList<ChessPosition> moves){
         ChessPiece[][] pieces = board.getBoard();
         boolean whiteBackground = true;
         if(white){
@@ -592,7 +619,7 @@ public class ServerFacade {
         System.out.println("");
     }
 
-    private void printPiece(ChessPiece piece, int i, int j, boolean whiteBackground, ChessPosition init, ArrayList<ChessPosition> moves) throws Exception{
+    private void printPiece(ChessPiece piece, int i, int j, boolean whiteBackground, ChessPosition init, ArrayList<ChessPosition> moves){
         Predicate<ChessPiece> validPiece = x -> x != null;
         if(whiteBackground){
             if(init.equals(new ChessPosition(arrayToRow(i), arrayToCol(j)))){
@@ -630,7 +657,7 @@ public class ServerFacade {
         }
     }
 
-    private void printPiece(ChessPiece piece, boolean whiteBackground) throws Exception{
+    private void printPiece(ChessPiece piece, boolean whiteBackground){
         Predicate<ChessPiece> validPiece = x -> x != null;
         if(whiteBackground){
             System.out.printf("%s%s%s", EscapeSequences.SET_BG_COLOR_WHITE,
@@ -677,21 +704,6 @@ public class ServerFacade {
         for(int i = 0; i < res.size(); i++){
             GameData game = new Gson().fromJson(res.get(i).toString(), GameData.class);
             currentGames.add(game);
-        }
-        return currentGames;
-    }
-
-    private ArrayList<GameData> userGamesAsList() throws Exception{
-        HttpURLConnection http = sendRequest(url + "/game", "GET", "", authToken);
-        var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
-        var res = new Gson().fromJson(result.get("games").toString(), ArrayList.class);
-        ArrayList<GameData> currentGames = new ArrayList<>();
-        for(int i = 0; i < res.size(); i++){
-            GameData game = new Gson().fromJson(res.get(i).toString(), GameData.class);
-            if((game.whiteUsername() != null && game.whiteUsername().equals(username)) 
-            || (game.blackUsername() != null && game.blackUsername().equals(username))){
-                currentGames.add(game);
-            }
         }
         return currentGames;
     }

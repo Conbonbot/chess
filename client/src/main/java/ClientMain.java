@@ -1,11 +1,11 @@
 
 //import chess.ChessGame;
 
-import serverfacade.ServerFacade;
+import chessclient.ChessClient;
 
 public class ClientMain {
     public static void main(String[] args) throws Exception{
-        ServerFacade facade = new ServerFacade(3000);
+        ChessClient facade = new ChessClient(3000);
         facade.run();
     }
 }
