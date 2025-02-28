@@ -14,9 +14,12 @@ import javax.websocket.WebSocketContainer;
 
 import com.google.gson.Gson;
 
+import chess.ChessPosition;
 import exception.ResponseException;
 import websocket.commands.ConnectCommand;
+import websocket.commands.HighlightCommand;
 import websocket.commands.MakeMoveCommand;
+import websocket.commands.RequestBoard;
 import websocket.commands.UserGameCommand;
 import websocket.commands.UserGameCommand.CommandType;
 import websocket.messages.ServerMessage;
@@ -53,6 +56,11 @@ public class WebSocketFacade extends Endpoint{
     public void onOpen(Session sn, EndpointConfig ec) {
     }
 
+    public void loadBoard(String authToken, String gameID, boolean isWhite) throws Exception{
+        var load = new RequestBoard(CommandType.REQUEST_BOARD, authToken, Integer.valueOf(gameID), isWhite);
+        this.session.getBasicRemote().sendText(new Gson().toJson(load));
+    }
+
     public void connect(String authToken, String gameID, String strType) throws ResponseException{
         try {
             var connect = new ConnectCommand(CommandType.CONNECT, authToken, Integer.valueOf(gameID), strType.toUpperCase());
@@ -64,7 +72,12 @@ public class WebSocketFacade extends Endpoint{
     }
 
     public void makeMove(MakeMoveCommand command) throws ResponseException{
+        
+    }
 
+    public void highlight(String authToken, String gameID, ChessPosition pos, boolean isWhite) throws Exception{
+        var load = new HighlightCommand(CommandType.HIGHLIGHT, authToken, Integer.valueOf(gameID), pos, isWhite);
+        this.session.getBasicRemote().sendText(new Gson().toJson(load));
     }
 
     public void leave(String authToken, String gameID) throws IOException, ResponseException{

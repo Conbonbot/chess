@@ -2,6 +2,7 @@ package service;
 import java.util.UUID;
 
 import chess.ChessBoard;
+import chess.ChessGame;
 import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
 import dataaccess.MySqlAuthDAO;
@@ -65,7 +66,7 @@ public class ChessService {
         String username = authAccess.getAuth(authToken).username();
         switch (joinGameRequest.playerColor().toUpperCase()) {
             case "WHITE" -> {
-                if(game != null && game.whiteUsername() == null){
+                if(game != null && (game.whiteUsername() == null || (game.whiteUsername() == null ? username == null : game.whiteUsername().equals(username)))){
                     gameAccess.updateGame(joinGameRequest.gameID(), username, null);
                 }
                 else{
@@ -73,7 +74,7 @@ public class ChessService {
                 }
             }
             case "BLACK" -> {
-                if(game != null && game.blackUsername() == null){
+                if(game != null && (game.blackUsername() == null || (game.blackUsername() == null ? username == null : game.blackUsername().equals(username)))){
                     gameAccess.updateGame(joinGameRequest.gameID(), null, username);
                 }
                 else{
@@ -130,6 +131,13 @@ public class ChessService {
         GameData game = gameAccess.getGame(gameID);
         return game.game().getBoard();
     }
+
+    // return a chess game
+    public ChessGame getGame(String authToken, int gameID) throws ResponseException{
+        GameData game = gameAccess.getGame(gameID);
+        return game.game();
+    }
+
 
     private static String generateToken(){
         return UUID.randomUUID().toString();

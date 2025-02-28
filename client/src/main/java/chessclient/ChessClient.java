@@ -26,6 +26,7 @@ import ui.EscapeSequences;
 import websocket.ServerMessageObserver;
 import websocket.WebSocketFacade;
 import websocket.messages.ErrorMessage;
+import websocket.messages.HighlightMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
 import websocket.messages.ServerMessage;
@@ -33,7 +34,6 @@ import websocket.messages.ServerMessage;
 public class ChessClient implements ServerMessageObserver{
 
     private Scanner scanner;
-    private String status = EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
     private boolean console = true;
     private final String url;
     private String authToken = "";
@@ -41,9 +41,10 @@ public class ChessClient implements ServerMessageObserver{
     private boolean isWhite;
     private boolean isObserving = false;
     private String userGameID = "";
+    private String line;
     // websocket
     private WebSocketFacade ws;
-    private Status statusReal = Status.LOGGED_OUT;
+    private Status status = Status.LOGGED_OUT;
 
     private void init(){
         System.out.printf("%s%s Welcome to 240 Chess. Type Help to get started %s%n", 
@@ -59,27 +60,55 @@ public class ChessClient implements ServerMessageObserver{
         url = "http://localhost:" + port;
         scanner = new Scanner(System.in);
     }
+    
+    // Websocket TODO:
 
     @Override
     public void message(ServerMessage message, String strMessage){
         switch(message.getServerMessageType()){
             case LOAD_GAME -> loadGame(new Gson().fromJson(strMessage, LoadGameMessage.class));
             case ERROR -> error(new Gson().fromJson(strMessage, ErrorMessage.class));
+            case CONNECT_ERROR -> connectError(new Gson().fromJson(strMessage, ErrorMessage.class));
             case NOTIFICATION -> notification(new Gson().fromJson(strMessage, NotificationMessage.class));
-            case SUCCESS -> printStatus();
+            case RESIGN -> resignPing();
+            case LEAVE -> leavePing();
+            case HIGHLIGHT -> highlightPing(new Gson().fromJson(strMessage, HighlightMessage.class));
+            default -> throw new IllegalArgumentException("Unexpected value: " + message.getServerMessageType());
         };
         
     }
 
+    private void resignPing(){
+        System.out.printf("You have resigned and the other player has won.%n");
+        status = Status.LOGGED_IN;
+    }
+
+    private void leavePing(){
+        status = Status.LOGGED_IN;
+    }
+
     private void loadGame(LoadGameMessage message) {
         printBoard(message.getBoard(), message.isWhite());
-        
+        printStatus();
+    }
+
+    private void highlightPing(HighlightMessage message){ // TODO: implement
+        printBoard(message.getBoard(), isWhite, message.getPos(), message.getLocations());
+        printStatus();
+    }
+
+    private void connectError(ErrorMessage message){
+        System.out.printf("%s%s%s%n", EscapeSequences.SET_TEXT_COLOR_RED,
+            message.getErrorMessage(),
+            EscapeSequences.FULL_COLOR_RESET);
+            status = Status.LOGGED_IN;
     }
 
     private void error(ErrorMessage message) {
         System.out.printf("%s%s%s%n", EscapeSequences.SET_TEXT_COLOR_RED,
             message.getErrorMessage(),
             EscapeSequences.FULL_COLOR_RESET);
+        printStatus();
         
     }
 
@@ -88,43 +117,36 @@ public class ChessClient implements ServerMessageObserver{
             EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY,
             message.getNotification(),
             EscapeSequences.FULL_COLOR_RESET);
+        printStatus();
         
     }
 
+    // Priting status
+
     private void printStatus(){
-        System.out.printf("%s >>> ", status);
+        String str = switch(status){
+            case LOGGED_IN -> EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
+            case LOGGED_OUT -> EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
+            case IN_GAME -> EscapeSequences.SET_TEXT_COLOR_GREEN + "[IN_GAME]" + EscapeSequences.FULL_COLOR_RESET;
+            case OBSERVING -> EscapeSequences.SET_TEXT_COLOR_GREEN + "[OBSERVING]" + EscapeSequences.FULL_COLOR_RESET;
+            default -> "";
+        };
+        System.out.printf("%s >>> ", str);
     }
+
+    // Running 
 
     public void run(){
         init();
-        String line = "";
-        printStatus();
-        while (!line.toLowerCase().equals("quit")) {
-            if(console && scanner.hasNextLine()) {
-                line = scanner.nextLine();
+        line = "";
+        while (!line.toLowerCase().equals("quit")){
+            if(console){
                 try{
-                    switch(line.split(" ")[0]) {
-                        // Commands
-                        case "quit" -> quit();
-                        case "help" -> help();
-                        // Prelogin commands
-                        case "login" -> login(line);
-                        case "register" -> register(line);
-                        // Postlogin commands
-                        case "logout" -> logout();
-                        case "create" -> createGame(line);
-                        case "list" -> listGames();
-                        case "observe" -> observeGame(line);
-                        case "join" -> joinGame(line);
-                        case "leave" -> leaveGame(line);
-                        case "resign" -> resign();
-                        case "move" -> makeMove(line);
-                        case "highlight" -> highlightMoves(line);
-                        case "redraw" -> redrawBoard(line);
-                        default -> System.out.printf("%s'%s' is not recognized as a command. Type help for a list%s%n",
-                                    EscapeSequences.SET_TEXT_COLOR_RED, 
-                                    line,
-                                    EscapeSequences.RESET_TEXT_COLOR);
+                    switch(status){
+                        case LOGGED_OUT -> runPreLogin();
+                        case LOGGED_IN -> runPostLogin();
+                        case IN_GAME -> runGameplay();
+                        case OBSERVING -> runGameplay();
                     }
                 }
                 catch(IOException ex){
@@ -136,9 +158,9 @@ public class ChessClient implements ServerMessageObserver{
                         EscapeSequences.FULL_COLOR_RESET);
                 }
                 catch(Exception ex){
-                    exceptionHandler(ex);
-                    
+                    exceptionHandler(ex);   
                 }
+
             }
             else{
                 System.out.printf("%nGoodbye%n");
@@ -147,6 +169,97 @@ public class ChessClient implements ServerMessageObserver{
             }
         }
     }
+
+    private void runPreLogin() throws Exception{
+        printStatus();
+        if(scanner.hasNextLine()){
+            line = scanner.nextLine();
+        }
+        else{
+            console = false;
+            return;
+        }
+        switch(line.split(" ")[0]){
+            case "quit" -> quit();
+            case "help" -> help();
+            // Prelogin commands
+            case "login" -> login(line);
+            case "register" -> register(line); 
+            default -> System.out.printf("%s'%s' is not recognized as a command. Type help for a list%s%n",
+                        EscapeSequences.SET_TEXT_COLOR_RED, 
+                        line,
+                        EscapeSequences.RESET_TEXT_COLOR);
+
+        }
+    }
+
+    private void runPostLogin() throws Exception{
+        printStatus();
+        if(scanner.hasNextLine()){
+            line = scanner.nextLine();
+        }
+        else{
+            console = false;
+            return;
+        }
+        switch(line.split(" ")[0]){
+            case "quit" -> quit();
+            case "help" -> help();
+            case "logout" -> logout();
+            case "create" -> createGame(line);
+            case "list" -> listGames();
+            case "observe" -> observeGame(line);
+            case "join" -> joinGame(line);
+            default -> System.out.printf("%s'%s' is not recognized as a command. Type help for a list%s%n",
+                        EscapeSequences.SET_TEXT_COLOR_RED, 
+                        line,
+                        EscapeSequences.RESET_TEXT_COLOR);
+        }
+                
+    }
+
+    private void runGameplay() throws Exception{
+        if(scanner.hasNextLine()){
+            line = scanner.nextLine();
+        }
+        else{
+            console = false;
+            return;
+        }
+        switch(line.split(" ")[0]){
+            case "quit" -> {
+                quit();
+            }
+            case "help" -> {
+                help();
+                printStatus();
+            }
+            case "resign" -> {
+                resign();
+            }
+            case "move" -> {
+                makeMove(line);
+            }
+            case "highlight" -> {
+                highlightMoves(line);
+            }
+            case "leave" -> {  
+                leaveGame(line);
+            }
+            case "redraw" -> { 
+                redrawBoard(line);
+            }
+            default -> { 
+                System.out.printf("%s'%s' is not recognized as a command. Type help for a list%s%n",
+                        EscapeSequences.SET_TEXT_COLOR_RED, 
+                        line,
+                        EscapeSequences.RESET_TEXT_COLOR);
+                printStatus();
+            }
+        }
+    }
+
+    // Exceptions and checkers
 
     private void exceptionHandler(IOException ex){
         try{
@@ -172,8 +285,6 @@ public class ChessClient implements ServerMessageObserver{
             System.out.printf("Below is the errror%n%s%n", error.toString());
         }
     }
-
-    // Exceptions and checkers
 
     private void exceptionHandler(Exception ex){
         System.out.printf("%s%s%s%n", EscapeSequences.SET_TEXT_COLOR_RED, ex.getMessage(), EscapeSequences.FULL_COLOR_RESET);
@@ -287,10 +398,8 @@ public class ChessClient implements ServerMessageObserver{
         String response = receiveResponse(http).toString();
         authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
         username = values[1];
-        status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
+        status = Status.LOGGED_IN;
         System.out.printf("Welcome back %s!%n", values[1]);
-
-        
     }
 
     public void register(String line) throws Exception{
@@ -301,10 +410,8 @@ public class ChessClient implements ServerMessageObserver{
         String response = receiveResponse(http).toString();
         authToken = response.substring(response.indexOf("authToken")+10, response.length()-1);
         username = values[1];
-        status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
+        status = Status.LOGGED_IN;
         System.out.printf("Welcome to chess! use the command 'help' to show commands!%n");
-
-        
     }
 
     // Postlogin
@@ -315,9 +422,7 @@ public class ChessClient implements ServerMessageObserver{
         receiveResponse(http);
         username = "";
         authToken = "";
-        status = EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY + "[LOGGED_OUT]" + EscapeSequences.FULL_COLOR_RESET;
-
-        
+        status = Status.LOGGED_OUT;
     }
 
     public void createGame(String line) throws Exception{
@@ -328,7 +433,6 @@ public class ChessClient implements ServerMessageObserver{
         HttpURLConnection http = sendRequest(url + "/game", "POST", new Gson().toJson(body), authToken);
         receiveResponse(http);
         System.out.printf("The game '%s' has been created!%n", gameName);
-
         
 
     }
@@ -350,6 +454,7 @@ public class ChessClient implements ServerMessageObserver{
             System.out.printf("ID: %d | game: %s | white: %s | black: %s\n", gamesList.get(i).gameID(), gamesList.get(i).gameName(),
                         gamesList.get(i).whiteUsername(), gamesList.get(i).blackUsername());
         }
+        
 
         
     }
@@ -360,9 +465,9 @@ public class ChessClient implements ServerMessageObserver{
         ws = new WebSocketFacade(url, this);
         ws.connect(authToken, values[1], values[2]);
         // wait for response
-        status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[IN_GAME]" + EscapeSequences.FULL_COLOR_RESET;
-        statusReal = Status.IN_GAME;
+        status = Status.IN_GAME;
         userGameID = values[1];
+        isWhite = values[2].toLowerCase().equals("white");
     }
 
 
@@ -372,8 +477,7 @@ public class ChessClient implements ServerMessageObserver{
         ws.leave(authToken, userGameID);
         System.out.println("Leaving game...");
         userGameID = "";
-        statusReal = Status.LOGGED_IN;
-        status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
+        status = Status.LOGGED_IN;
     }
 
     public void resign() throws Exception{
@@ -382,17 +486,14 @@ public class ChessClient implements ServerMessageObserver{
             throw new Exception("You are not connected to any games");
         }
         System.out.println("Are you sure you want to resign? (type 'yes' to confirm, anything else as no)");
-        System.out.printf("%s >>>>> ", status);
-        String line = "";
-        while(line.isEmpty()){
+        printStatus();
+        String resLine = "";
+        while(resLine.isEmpty()){
             if(scanner.hasNextLine()){
-                line = scanner.nextLine();
-                if(line.equals("yes")){
+                resLine = scanner.nextLine();
+                if(resLine.equals("yes")){
                     ws = new WebSocketFacade(url, this);
                     ws.resign(authToken, userGameID);
-                    userGameID = "";
-                    System.out.println("You have resigned");
-                    status = EscapeSequences.SET_TEXT_COLOR_BLUE + "[LOGGED_IN]" + EscapeSequences.FULL_COLOR_RESET;
                 }
                 else{
                     System.out.println("No resignation, you will stay in the game");
@@ -400,7 +501,6 @@ public class ChessClient implements ServerMessageObserver{
                 break;
             }
         }
-        // TODO: websocket
     }
 
     public void makeMove(String line) throws Exception{
@@ -448,25 +548,11 @@ public class ChessClient implements ServerMessageObserver{
 
     public void highlightMoves(String line) throws Exception{
         checkLogin();
-        checkGame();
         checkLength(line, 2);
+        // websocket
         ChessPosition pos = locationToPosition(line.split(" ")[1]);
-        GameData gameData = currentUserGame();
-        ChessGame game = gameData.game();
-        Collection<ChessMove> moves;
-        try{
-            moves = game.validMoves(pos);
-        }
-        catch(NullPointerException ex){
-            throw new Exception("That square is empty.");
-        }
-        ArrayList<ChessPosition> possibleLocations = new ArrayList<>();
-        for(ChessMove move : moves){
-            possibleLocations.add(move.getEndPosition());
-        }
-        printBoard(game.getBoard(), isWhite, pos, possibleLocations);
-
-
+        ws = new WebSocketFacade(url, this);
+        ws.highlight(authToken, userGameID, pos, isWhite);
     }
 
     public void redrawBoard(String line) throws Exception{
@@ -474,8 +560,9 @@ public class ChessClient implements ServerMessageObserver{
         checkLength(line, 1);
         checkGame();
 
-        GameData game = currentUserGame();
-        printBoard(game.game().getBoard(), isWhite);
+        ws = new WebSocketFacade(url, this);
+        ws.loadBoard(authToken, userGameID, isWhite);
+        
     }
 
     public void observeGame(String line) throws Exception{
@@ -485,9 +572,11 @@ public class ChessClient implements ServerMessageObserver{
         HttpURLConnection http = sendRequest(url + "/game", "GET", "", authToken);
         var result = new Gson().fromJson(receiveResponse(http).toString(), Map.class);
         GameData game = findGame(result, values[1]);
-        status = EscapeSequences.SET_TEXT_COLOR_GREEN + "[OBSERVING]" + EscapeSequences.FULL_COLOR_RESET;
+        status = Status.OBSERVING;
         isObserving = true;
         printBoard(game.game().getBoard(), true);
+        // TODO: Websocket
+        
     }
 
     private HttpURLConnection sendRequest(String url, String method, String body) throws URISyntaxException, IOException {
