@@ -33,6 +33,7 @@ import websocket.messages.ServerMessage.ServerMessageType;
 import static websocket.messages.ServerMessage.ServerMessageType.ERROR;
 import static websocket.messages.ServerMessage.ServerMessageType.HIGHLIGHT;
 import static websocket.messages.ServerMessage.ServerMessageType.LOAD_GAME;
+import static websocket.messages.ServerMessage.ServerMessageType.NOTIFICATION;
 
 @WebSocket
 public class WebSocketHandler{
@@ -62,7 +63,7 @@ public class WebSocketHandler{
     }
 
     private void connect(ConnectCommand command, Session session) throws IOException, ResponseException{
-        connections.add(Integer.toString(command.getGameID()), session);
+        connections.add(command.getAuthToken(), command.getGameID(), session);
         try{
             chessService.joinGame(command.getAuthToken(), new Request.JoinGame(command.getPlayerColor(), command.getGameID()));
             // send chess board
@@ -73,7 +74,7 @@ public class WebSocketHandler{
             String str = chessService.getUsername(command.getAuthToken());
             str += " has joined the game as color " + command.getPlayerColor();
             NotificationMessage broadcastMessage = new NotificationMessage(LOAD_GAME, str);
-            connections.broadcast(Integer.toString(command.getGameID()), broadcastMessage);
+            connections.broadcast(command.getAuthToken(), command.getGameID(), broadcastMessage);
         }
         catch(ResponseException ex){
             ErrorMessage message = new ErrorMessage(ServerMessageType.CONNECT_ERROR, ex.getMessage());
@@ -127,6 +128,10 @@ public class WebSocketHandler{
                     chessService.updateGame(command.getAuthToken(), command.getGameID(), game);
                     LoadGameMessage newBoard = new LoadGameMessage(LOAD_GAME, board, command.isWhite());
                     session.getRemote().sendString(new Gson().toJson(newBoard));
+                    // broadcast new board & notification of made move
+                    connections.broadcast(command.getAuthToken(), command.getGameID(), newBoard);
+                    NotificationMessage notify = new NotificationMessage(NOTIFICATION, "Move made: " + command.getMove().toString());
+                    connections.broadcast(command.getAuthToken(), command.getGameID(), notify);
                     return;
                 } catch (InvalidMoveException e) {
                     // send error
@@ -144,10 +149,14 @@ public class WebSocketHandler{
 
     }
 
-    private void leave(UserGameCommand command, Session session) throws IOException{
+    private void leave(UserGameCommand command, Session session) throws IOException, ResponseException{
         connections.remove(command.getAuthToken());
         ServerMessage message = new ServerMessage(ServerMessageType.LEAVE);
         session.getRemote().sendString(new Gson().toJson(message));
+        // Broadcast
+        String username = chessService.getUsername(command.getAuthToken());
+        NotificationMessage notify = new NotificationMessage(NOTIFICATION, username + " has left the game");
+        connections.broadcast(command.getAuthToken(), command.getGameID(), notify);
 
     }
 
@@ -157,6 +166,10 @@ public class WebSocketHandler{
             chessService.deleteGame(command.getAuthToken(), new Request.DeleteGame(command.getGameID()));
             ServerMessage message = new ServerMessage(ServerMessageType.RESIGN);
             session.getRemote().sendString(new Gson().toJson(message));
+            // Broadcast
+            String username = chessService.getUsername(command.getAuthToken());
+            NotificationMessage notify = new NotificationMessage(NOTIFICATION, username + " has resigned.");
+            connections.broadcast(command.getAuthToken(), command.getGameID(), notify);
         } catch (ResponseException ex) {
             ErrorMessage message = new ErrorMessage(ServerMessageType.ERROR, ex.getMessage());
             session.getRemote().sendString(new Gson().toJson(message));

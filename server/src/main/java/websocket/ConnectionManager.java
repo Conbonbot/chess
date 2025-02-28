@@ -3,6 +3,7 @@ package websocket;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.jetty.websocket.api.Session;
@@ -13,9 +14,9 @@ public class ConnectionManager {
     public final ConcurrentHashMap<String, Connection> connections = new ConcurrentHashMap<>();
 
     // add connection
-    public void add(String authToken, Session session){
+    public void add(String authToken, Integer gameID, Session session){
         // TODO: change
-        connections.put(authToken, new Connection(authToken, 0, session));
+        connections.put(authToken, new Connection(gameID, session));
     }
 
     // remove connection
@@ -24,20 +25,23 @@ public class ConnectionManager {
     }
 
     // send messages to each connection
-    public void broadcast(String authToken, ServerMessage serverMessage) throws IOException{
-        var removeList = new ArrayList<Connection>();
-        for(var connection : connections.values()){
+    public void broadcast(String authToken, Integer gameID, ServerMessage serverMessage) throws IOException{
+        var removeList = new ArrayList<String>();
+        for(Map.Entry<String, Connection> entry : connections.entrySet()){
+            var auth = entry.getKey();
+            var connection = entry.getValue();
             if(connection.session.isOpen()){
-                if(!connection.getGameID().equals(authToken)){
+                if(!auth.equals(authToken)){
                     connection.send(serverMessage.toString());
                 }
             }
             else{
-                removeList.add(connection);
+                // remove connection
+                removeList.add(auth);
             }
         }
         for(var connection : removeList){
-            connections.remove(connection.getGameID());
+            connections.remove(connection);
         }
     }
 }
