@@ -4,17 +4,17 @@ import chess.ChessBoard;
 
 public class LoadGameMessage extends ServerMessage{
     
-    private ChessBoard board;
+    private ChessBoard game;
     private boolean whitePerspective;
 
-    public LoadGameMessage(ServerMessageType type, ChessBoard board, boolean whitePerspective){
+    public LoadGameMessage(ServerMessageType type, ChessBoard game, boolean whitePerspective){
         super(type);
-        this.board = board;
+        this.game = game;
         this.whitePerspective = whitePerspective;
     }
 
     public ChessBoard getBoard(){
-        return board;
+        return game;
     }
 
     public boolean isWhite(){

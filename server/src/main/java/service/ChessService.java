@@ -1,7 +1,6 @@
 package service;
 import java.util.UUID;
 
-import chess.ChessBoard;
 import chess.ChessGame;
 import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
@@ -58,8 +57,11 @@ public class ChessService {
     }
 
     public void joinGame(String authToken, Request.JoinGame joinGameRequest) throws ResponseException{
-        if(joinGameRequest.playerColor() == null || joinGameRequest.playerColor().isEmpty() || joinGameRequest.gameID() < 1){
-            throw new ResponseException(400, "Error: bad request");
+        if(joinGameRequest.gameID() < 1){
+            throw new ResponseException(400, "Error: bad request -- invalid game");
+        }
+        if(joinGameRequest.playerColor() == null || joinGameRequest.playerColor().isEmpty()){
+            throw new ResponseException(400, "Error: bad request -- invalid player color");
         }
         checkAuth(authToken);
         GameData game = gameAccess.getGame(joinGameRequest.gameID());
@@ -121,21 +123,22 @@ public class ChessService {
         gameAccess.updateGame(updateRequest.gameID(), updateRequest.game());
     }
 
+    public void removeGameUser(String authToken, String playerColor){
+        
+    }
+
     public void deleteGame(String authToken, Request.DeleteGame deleteRequest) throws ResponseException{
         checkAuth(authToken);
         gameAccess.deleteGame(deleteRequest.gameID());
     }
 
-    // get a chess board
-    public ChessBoard getBoard(String authToken, int gameID) throws ResponseException{
-        GameData game = gameAccess.getGame(gameID);
-        return game.game().getBoard();
-    }
-
-    // return a chess game
-    public ChessGame getGame(String authToken, int gameID) throws ResponseException{
-        GameData game = gameAccess.getGame(gameID);
-        return game.game();
+    public GameData getData(String authToken, int gameID) throws ResponseException{
+        checkAuth(authToken);
+        GameData data = gameAccess.getGame(gameID); 
+        if(data == null){
+            throw new ResponseException(401, "Error: bad request -- invalid game");
+        }
+        return data;
     }
 
     // Returns the username from an authToken

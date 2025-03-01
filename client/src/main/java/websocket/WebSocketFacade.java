@@ -68,7 +68,7 @@ public class WebSocketFacade extends Endpoint{
             this.session.getBasicRemote().sendText(new Gson().toJson(connect));
         } 
         catch (IOException | NumberFormatException ex) {
-            throw new ResponseException(400, "Error: bad request");
+            throw new ResponseException(400, "Error: bad request -- invalid game");
         }
     }
 
@@ -94,6 +94,7 @@ public class WebSocketFacade extends Endpoint{
 
     public void observe(String authToken, String gameID) throws IOException, ResponseException{
         try{
+
             var observe = new RequestBoard(CommandType.OBSERVE, authToken, Integer.valueOf(gameID), true);
             this.session.getBasicRemote().sendText(new Gson().toJson(observe));
         }

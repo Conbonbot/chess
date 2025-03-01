@@ -72,6 +72,28 @@ public class MemoryGameDAO implements GameDAO {
     }
 
     @Override
+    public void removeUser(int gameID, String playerColor){
+        int i = -1;
+        for(i = 0; i < games.size(); i++){
+            if(games.get(i).gameID() == gameID){
+                if(playerColor.equals("white") || playerColor.equals("black")){
+                    break;
+                }
+            }
+        }
+        if(i != -1){
+            GameData newGame = new GameData(
+                games.get(i).gameID(), 
+                (playerColor.equals("white")) ? null : games.get(i).whiteUsername(), 
+                (playerColor.equals("black")) ? null : games.get(i).blackUsername(), 
+                games.get(i).gameName(),
+                games.get(i).game());
+            games.remove(i);
+            games.add(newGame);
+        }
+    }
+
+    @Override
     public void clear(){
         nextID = 1;
         games.clear();

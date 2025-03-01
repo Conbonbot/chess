@@ -8,6 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.jetty.websocket.api.Session;
 
+import com.google.gson.Gson;
+
 import websocket.messages.ServerMessage;
 
 public class ConnectionManager {
@@ -32,7 +34,8 @@ public class ConnectionManager {
             var connection = entry.getValue();
             if(connection.session.isOpen()){
                 if(!auth.equals(authToken)){
-                    connection.send(serverMessage.toString());
+                    System.out.printf("Sending message to %s%n", auth);
+                    connection.send(new Gson().toJson(serverMessage));
                 }
             }
             else{

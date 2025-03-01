@@ -1,18 +1,43 @@
 package passoff.server;
 
-import chess.*;
-import org.junit.jupiter.api.*;
-import passoff.model.*;
-import passoff.websocket.*;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+
+import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessPosition;
+import passoff.model.TestAuthResult;
+import passoff.model.TestCreateRequest;
+import passoff.model.TestCreateResult;
+import passoff.model.TestJoinRequest;
+import passoff.model.TestResult;
+import passoff.model.TestUser;
+import passoff.websocket.TestCommand;
+import passoff.websocket.TestMessage;
+import passoff.websocket.WebsocketTestingEnvironment;
 import server.Server;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
-
-import java.net.URISyntaxException;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static websocket.messages.ServerMessage.ServerMessageType.*;
+import static websocket.messages.ServerMessage.ServerMessageType.ERROR;
+import static websocket.messages.ServerMessage.ServerMessageType.LOAD_GAME;
+import static websocket.messages.ServerMessage.ServerMessageType.NOTIFICATION;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class WebSocketTests {

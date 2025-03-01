@@ -12,6 +12,7 @@ public interface GameDAO {
     ArrayList<GameData> listGames() throws ResponseException;
     void updateGame(int gameID, String whiteUsername, String blackUsername) throws ResponseException;
     void updateGame(int gameID, ChessGame game) throws ResponseException;
+    void removeUser(int gameID, String playerColor) throws ResponseException;
     void deleteGame(int gameID) throws ResponseException;
     void clear() throws ResponseException;
 }
