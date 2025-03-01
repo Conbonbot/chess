@@ -29,7 +29,6 @@ import websocket.messages.ErrorMessage;
 import websocket.messages.HighlightMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
-import websocket.messages.ServerMessage;
 import websocket.messages.ServerMessage.ServerMessageType;
 import static websocket.messages.ServerMessage.ServerMessageType.ERROR;
 import static websocket.messages.ServerMessage.ServerMessageType.HIGHLIGHT;
@@ -131,41 +130,51 @@ public class WebSocketHandler{
     }
 
     private void makeMove(MakeMoveCommand command, Session session) throws IOException, ResponseException{
-        ChessGame game;
+        GameData data;
         try{
-            game = chessService.getData(command.getAuthToken(), command.getGameID()).game();
+            data = chessService.getData(command.getAuthToken(), command.getGameID());
         }
         catch(ResponseException ex){
             ErrorMessage message = new ErrorMessage(ERROR, "Bad authentication");
             session.getRemote().sendString(new Gson().toJson(message));
             return;
         }
+        ChessGame game = data.game();
+        String username = chessService.getUsername(command.getAuthToken());
         ChessBoard board = game.getBoard();
         ChessPiece startPiece = board.getPiece(command.getMove().getStartPosition());
         ErrorMessage message;
-        if(startPiece != null){
-            try {
-                if(startPiece.getTeamColor() != (command.isWhite() ? TeamColor.WHITE : TeamColor.BLACK)){
-                    throw new InvalidMoveException("This piece is not yours");
+        // check if player is part of game
+        if(data.blackUsername().equals(username) || data.whiteUsername().equals(username)){
+            if(startPiece != null){
+                try {
+                    if(startPiece.getTeamColor() == TeamColor.WHITE && data.blackUsername().equals(username)
+                    || startPiece.getTeamColor() == TeamColor.BLACK && data.whiteUsername().equals(username)){
+                        throw new InvalidMoveException("This piece is not yours");
+                    }
+                    game.makeMove(command.getMove());
+                    chessService.updateGame(command.getAuthToken(), command.getGameID(), game);
+                    LoadGameMessage newBoard = new LoadGameMessage(LOAD_GAME, board, command.isWhite());
+                    session.getRemote().sendString(new Gson().toJson(newBoard));
+                    // broadcast new board & notification of made move
+                    connections.broadcast(command.getAuthToken(), command.getGameID(), newBoard);
+                    NotificationMessage notify = new NotificationMessage(NOTIFICATION, "Move made: " + command.getMove().toString());
+                    connections.broadcast(command.getAuthToken(), command.getGameID(), notify);
+                    return;
+                } catch (InvalidMoveException e) {
+                    // send error
+                    message = new ErrorMessage(ERROR, e.getMessage());
+                    session.getRemote().sendString(new Gson().toJson(message));
+                    return;
                 }
-                game.makeMove(command.getMove());
-                chessService.updateGame(command.getAuthToken(), command.getGameID(), game);
-                LoadGameMessage newBoard = new LoadGameMessage(LOAD_GAME, board, command.isWhite());
-                session.getRemote().sendString(new Gson().toJson(newBoard));
-                // broadcast new board & notification of made move
-                connections.broadcast(command.getAuthToken(), command.getGameID(), newBoard);
-                NotificationMessage notify = new NotificationMessage(NOTIFICATION, "Move made: " + command.getMove().toString());
-                connections.broadcast(command.getAuthToken(), command.getGameID(), notify);
-                return;
-            } catch (InvalidMoveException e) {
-                // send error
-                message = new ErrorMessage(ERROR, e.getMessage());
-                session.getRemote().sendString(new Gson().toJson(message));
-                return;
             }
+            message = new ErrorMessage(ERROR, "This piece does not exist.");
+            session.getRemote().sendString(new Gson().toJson(message));
         }
-        message = new ErrorMessage(ERROR, "This piece does not exist");
-        session.getRemote().sendString(new Gson().toJson(message));
+        else{
+            message = new ErrorMessage(ERROR, "You cannot make a move as an observer.");
+            session.getRemote().sendString(new Gson().toJson(message));
+        }
 
     }
 
@@ -175,11 +184,11 @@ public class WebSocketHandler{
         String username = chessService.getUsername(command.getAuthToken());
         String notification = username;
         if(gameData.whiteUsername() != null && gameData.whiteUsername().equals(username)){
-            chessService.removeGameUser(command.getAuthToken(), "white");
+            chessService.removeGameUser(command.getAuthToken(), command.getGameID(), "white");
             notification += " has left the game (was color white)";
         } 
         else if(gameData.blackUsername() != null && gameData.blackUsername().equals(username)){
-            chessService.removeGameUser(command.getAuthToken(), "black");
+            chessService.removeGameUser(command.getAuthToken(), command.getGameID(), "black");
             notification += " has left the game (was color black)";
         }
         else{
@@ -187,10 +196,7 @@ public class WebSocketHandler{
         }
         //
         connections.remove(command.getAuthToken());
-        ServerMessage message = new ServerMessage(ServerMessageType.LEAVE);
-        session.getRemote().sendString(new Gson().toJson(message));
         // Broadcast
-        
         NotificationMessage notify = new NotificationMessage(NOTIFICATION, notification);
         connections.broadcast(command.getAuthToken(), command.getGameID(), notify);
 
@@ -199,13 +205,22 @@ public class WebSocketHandler{
     private void resign(UserGameCommand command, Session session) throws IOException{
         connections.remove(command.getAuthToken());
         try {
-            chessService.deleteGame(command.getAuthToken(), new Request.DeleteGame(command.getGameID()));
-            ServerMessage message = new ServerMessage(ServerMessageType.RESIGN);
-            session.getRemote().sendString(new Gson().toJson(message));
-            // Broadcast
+            GameData game = chessService.getData(command.getAuthToken(), command.getGameID());
             String username = chessService.getUsername(command.getAuthToken());
-            NotificationMessage notify = new NotificationMessage(NOTIFICATION, username + " has resigned.");
-            connections.broadcast(command.getAuthToken(), command.getGameID(), notify);
+            if(game.whiteUsername() != null && game.whiteUsername().equals(username)
+            || game.blackUsername() != null && game.blackUsername().equals(username)){
+                chessService.deleteGame(command.getAuthToken(), new Request.DeleteGame(command.getGameID()));
+                NotificationMessage message = new NotificationMessage(NOTIFICATION, "You have resigned.");
+                session.getRemote().sendString(new Gson().toJson(message));
+                // Broadcast
+                NotificationMessage notify = new NotificationMessage(NOTIFICATION, username + " has resigned.");
+                connections.broadcast(command.getAuthToken(), command.getGameID(), notify);
+            }
+            else{
+                ErrorMessage message = new ErrorMessage(ServerMessageType.ERROR, "You cannot resign a game you are not in.");
+                session.getRemote().sendString(new Gson().toJson(message));
+            }
+            
         } catch (ResponseException ex) {
             ErrorMessage message = new ErrorMessage(ServerMessageType.ERROR, ex.getMessage());
             session.getRemote().sendString(new Gson().toJson(message));

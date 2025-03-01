@@ -123,8 +123,9 @@ public class ChessService {
         gameAccess.updateGame(updateRequest.gameID(), updateRequest.game());
     }
 
-    public void removeGameUser(String authToken, String playerColor){
-        
+    public void removeGameUser(String authToken, int gameID, String playerColor) throws ResponseException{
+        checkAuth(authToken);
+        gameAccess.removeUser(gameID, playerColor);
     }
 
     public void deleteGame(String authToken, Request.DeleteGame deleteRequest) throws ResponseException{

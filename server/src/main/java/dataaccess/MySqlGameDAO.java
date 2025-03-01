@@ -126,9 +126,9 @@ public class MySqlGameDAO implements GameDAO{
     @Override
     public void removeUser(int gameID, String playerColor) throws ResponseException{
         var conn = DatabaseManager.getConnection();
-        var statement = "UPDATE game SET whiteUsername = null WHERE id = " + gameID;
+        var statement = "UPDATE game SET whiteUsername = NULL WHERE id = " + gameID;
         if(playerColor.equals("black")){
-            statement = "UPDATE game SET blackUsername = null WHERE id = " + gameID;
+            statement = "UPDATE game SET blackUsername = NULL WHERE id = " + gameID;
         }
         try(var remove = conn.prepareStatement(statement)){
             remove.executeUpdate();

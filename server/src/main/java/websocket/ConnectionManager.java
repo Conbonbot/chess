@@ -4,6 +4,7 @@ package websocket;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.jetty.websocket.api.Session;
@@ -33,7 +34,7 @@ public class ConnectionManager {
             var auth = entry.getKey();
             var connection = entry.getValue();
             if(connection.session.isOpen()){
-                if(!auth.equals(authToken)){
+                if(!auth.equals(authToken) && Objects.equals(connection.gameID, gameID)){
                     System.out.printf("Sending message to %s%n", auth);
                     connection.send(new Gson().toJson(serverMessage));
                 }

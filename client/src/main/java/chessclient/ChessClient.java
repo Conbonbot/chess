@@ -195,9 +195,9 @@ public class ChessClient implements ServerMessageObserver{
         switch(line.split(" ")[0]){
             case "quit" -> quit();
             case "help" -> help();
-            case "logout" -> logout();
+            case "logout" -> logout(line);
             case "create" -> createGame(line);
-            case "list" -> listGames();
+            case "list" -> listGames(line);
             case "observe" -> observeGame(line);
             case "join" -> joinGame(line);
             default -> {
@@ -228,7 +228,7 @@ public class ChessClient implements ServerMessageObserver{
                 printStatus();
             }
             case "resign" -> {
-                resign();
+                resign(line);
             }
             case "move" -> {
                 makeMove(line);
@@ -411,7 +411,7 @@ public class ChessClient implements ServerMessageObserver{
     }
 
     // Postlogin
-    public void logout() throws Exception{
+    public void logout(String line) throws Exception{
         checkLogin();
         checkLength(line, 1);
         HttpURLConnection http = sendRequest(url + "/session", "DELETE", "", authToken);
@@ -433,7 +433,7 @@ public class ChessClient implements ServerMessageObserver{
         
     }
 
-    public void listGames() throws Exception{
+    public void listGames(String line) throws Exception{
         checkLogin();
         checkLength(line, 1);
         HttpURLConnection http = sendRequest(url + "/game", "GET", "", authToken);
@@ -478,7 +478,7 @@ public class ChessClient implements ServerMessageObserver{
         status = Status.LOGGED_IN;
     }
 
-    public void resign() throws Exception{
+    public void resign(String line) throws Exception{
         checkLogin();
         checkLength(line, 1);
         if(userGameID.isEmpty()){

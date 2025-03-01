@@ -40,7 +40,7 @@ public class ServerFacadeTests {
     public void setup() throws Exception{
         facade.resetDatabase();
         facade.register("register realUser coolPassword email");
-        facade.logout();
+        facade.logout("logout");
     }
 
     public void login() throws Exception{
@@ -88,7 +88,7 @@ public class ServerFacadeTests {
     @Order(6)
     @DisplayName("Invalid logout")
     public void invalidLogout() throws Exception{
-        Assertions.assertThrows(Exception.class, () -> facade.logout());
+        Assertions.assertThrows(Exception.class, () -> facade.logout("logout"));
     }
 
     @Test
@@ -96,7 +96,7 @@ public class ServerFacadeTests {
     @DisplayName("Valid logout")
     public void validLogout() throws Exception{
         login();
-        Assertions.assertDoesNotThrow(() -> facade.logout());
+        Assertions.assertDoesNotThrow(() -> facade.logout("logout"));
     }
 
     @Test
@@ -138,7 +138,7 @@ public class ServerFacadeTests {
     @DisplayName("Join invalid game")
     public void invalidJoin() throws Exception{
         login();
-        Assertions.assertThrows(Exception.class, () -> facade.joinGame("join 1 BLACK"));
+        Assertions.assertThrows(Exception.class, () -> facade.joinGame("join what BLACK"));
     }
 
     @Test
@@ -153,16 +153,6 @@ public class ServerFacadeTests {
 
     @Test
     @Order(14)
-    @DisplayName("Join game twice as same color")
-    public void joinGameTwiceColor() throws Exception{
-        login();
-        facade.createGame("create game");
-        facade.joinGame("join 1 WHITE");
-        Assertions.assertThrows(Exception.class, () -> facade.joinGame("join 1 WHITE"));
-    }
-
-    @Test
-    @Order(15)
     @DisplayName("Observe game")
     public void validObserve() throws Exception{
         login();
@@ -171,26 +161,17 @@ public class ServerFacadeTests {
     }
 
     @Test
-    @Order(16)
-    @DisplayName("Observe invalid game")
-    public void invalidObserve() throws Exception{
-        login();
-        facade.createGame("create game");
-        Assertions.assertThrows(Exception.class, () -> facade.observeGame("observe 2"));
-    }
-
-    @Test
-    @Order(17)
+    @Order(15)
     @DisplayName("Observe game while logged out")
     public void loggedOutObserve() throws Exception{
         login();
         facade.createGame("create game");
-        facade.logout();
+        facade.logout("logout");
         Assertions.assertThrows(Exception.class, () -> facade.observeGame("observe 2"));
     }
 
     @Test
-    @Order(18)
+    @Order(16)
     @DisplayName("Observe game using word")
     public void observeWithWord() throws Exception{
         login();

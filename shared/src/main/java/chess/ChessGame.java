@@ -168,7 +168,7 @@ public class ChessGame {
             throw new InvalidMoveException("It is not your turn");
         }
         Collection<ChessMove> legalMoves = validMoves(move.getStartPosition());
-        if(legalMoves.isEmpty()){
+        if(legalMoves.isEmpty() || !legalMoves.contains(move)){
             throw new InvalidMoveException("No valid moves.");
         }
         for(ChessMove legalMove : legalMoves){

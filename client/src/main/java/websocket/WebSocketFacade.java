@@ -14,6 +14,8 @@ import javax.websocket.WebSocketContainer;
 
 import com.google.gson.Gson;
 
+import chess.ChessGame;
+import chess.ChessGame.TeamColor;
 import chess.ChessMove;
 import chess.ChessPosition;
 import exception.ResponseException;
@@ -64,8 +66,13 @@ public class WebSocketFacade extends Endpoint{
 
     public void connect(String authToken, String gameID, String strType) throws ResponseException{
         try {
-            var connect = new ConnectCommand(CommandType.CONNECT, authToken, Integer.valueOf(gameID), strType.toUpperCase());
-            this.session.getBasicRemote().sendText(new Gson().toJson(connect));
+            if(strType.toUpperCase().equals("WHITE") || strType.toUpperCase().equals("BLACK")){
+                var connect = new ConnectCommand(CommandType.CONNECT, authToken, Integer.valueOf(gameID), strType.toUpperCase());
+                this.session.getBasicRemote().sendText(new Gson().toJson(connect));
+            }
+            else{
+                throw new ResponseException(401, "Error: invalid player color");
+            }
         } 
         catch (IOException | NumberFormatException ex) {
             throw new ResponseException(400, "Error: bad request -- invalid game");
