@@ -18,7 +18,6 @@ public class ConnectionManager {
 
     // add connection
     public void add(String authToken, Integer gameID, Session session){
-        // TODO: change
         connections.put(authToken, new Connection(gameID, session));
     }
 

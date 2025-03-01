@@ -31,18 +31,22 @@ public class HighlightCommand extends UserGameCommand{
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj){
             return true;
-        if (!super.equals(obj))
+        }
+        if (!super.equals(obj)){
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()){
             return false;
+        }
         HighlightCommand other = (HighlightCommand) obj;
         if (pos == null) {
             if (other.pos != null)
                 return false;
-        } else if (!pos.equals(other.pos))
+        } else if (!pos.equals(other.pos)){
             return false;
+        }
         return isWhite == other.isWhite;
     }
 

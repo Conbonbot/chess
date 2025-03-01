@@ -65,10 +65,14 @@ public class ChessService {
         }
         checkAuth(authToken);
         GameData game = gameAccess.getGame(joinGameRequest.gameID());
+        if(game == null){
+            throw new ResponseException(400, "Error: bad request -- invalid game, does not exist");
+        }
         String username = authAccess.getAuth(authToken).username();
         switch (joinGameRequest.playerColor().toUpperCase()) {
             case "WHITE" -> {
-                if(game != null && (game.whiteUsername() == null || (game.whiteUsername() == null ? username == null : game.whiteUsername().equals(username)))){
+                if(game != null && (game.whiteUsername() == null 
+                || (game.whiteUsername() == null ? username == null : game.whiteUsername().equals(username)))){
                     gameAccess.updateGame(joinGameRequest.gameID(), username, null);
                 }
                 else{
@@ -76,7 +80,8 @@ public class ChessService {
                 }
             }
             case "BLACK" -> {
-                if(game != null && (game.blackUsername() == null || (game.blackUsername() == null ? username == null : game.blackUsername().equals(username)))){
+                if(game != null && (game.blackUsername() == null 
+                || (game.blackUsername() == null ? username == null : game.blackUsername().equals(username)))){
                     gameAccess.updateGame(joinGameRequest.gameID(), null, username);
                 }
                 else{

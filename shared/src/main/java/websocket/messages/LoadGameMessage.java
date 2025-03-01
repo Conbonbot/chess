@@ -4,8 +4,8 @@ import chess.ChessBoard;
 
 public class LoadGameMessage extends ServerMessage{
     
-    private ChessBoard game;
-    private boolean whitePerspective;
+    private final ChessBoard game;
+    private final boolean whitePerspective;
 
     public LoadGameMessage(ServerMessageType type, ChessBoard game, boolean whitePerspective){
         super(type);

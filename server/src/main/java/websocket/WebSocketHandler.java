@@ -93,8 +93,6 @@ public class WebSocketHandler{
         }
     }
 
-    
-
     private void sendBoard(RequestBoard command, Session session) throws IOException, ResponseException{
         ChessBoard game = chessService.getData(command.getAuthToken(), command.getGameID()).game().getBoard();
         LoadGameMessage message;
@@ -157,6 +155,7 @@ public class WebSocketHandler{
                     LoadGameMessage newBoard = new LoadGameMessage(LOAD_GAME, board, command.isWhite());
                     session.getRemote().sendString(new Gson().toJson(newBoard));
                     // broadcast new board & notification of made move
+                    newBoard = new LoadGameMessage(LOAD_GAME, board, command.isWhite());
                     connections.broadcast(command.getAuthToken(), command.getGameID(), newBoard);
                     NotificationMessage notify = new NotificationMessage(NOTIFICATION, "Move made: " + command.getMove().toString());
                     connections.broadcast(command.getAuthToken(), command.getGameID(), notify);
