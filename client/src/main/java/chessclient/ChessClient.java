@@ -412,7 +412,6 @@ public class ChessClient implements ServerMessageObserver{
 
     public void highlightMoves(String line) throws Exception{
         checkLogin();
-        checkGame();
         checkLength(line, 2);
         ChessPosition pos = ClientHelper.locationToPosition(line.split(" ")[1]);
         ws = new WebSocketFacade(url, this);
@@ -432,6 +431,7 @@ public class ChessClient implements ServerMessageObserver{
         checkLength(line, 2);
         ws = new WebSocketFacade(url, this);
         ws.observe(authToken, line.split(" ")[1]);
+        isWhite = true;
         status = Status.OBSERVING;
         userGameID = line.split(" ")[1];
     }

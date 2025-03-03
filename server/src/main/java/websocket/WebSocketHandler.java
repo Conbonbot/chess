@@ -111,17 +111,12 @@ public class WebSocketHandler{
         ChessGame game = chessService.getData(command.getAuthToken(), command.getGameID()).game();
         ChessBoard board = game.getBoard();
         if(board.getPiece(command.getPos()) != null){
-            if(board.getPiece(command.getPos()).getTeamColor() == (command.isWhite() ? TeamColor.WHITE : TeamColor.BLACK)){
-                // send it
-                ArrayList<ChessPosition> endLocations = new ArrayList<>();
-                for(ChessMove move : game.validMoves(command.getPos())){
-                    endLocations.add(move.getEndPosition());
-                }  
-                HighlightMessage message = new HighlightMessage(HIGHLIGHT, board, command.isWhite(), command.getPos(), endLocations);
-                session.getRemote().sendString(new Gson().toJson(message));
-                return;
-            }
-            ErrorMessage message = new ErrorMessage(ERROR, "That piece does not belong to you");
+            // send it
+            ArrayList<ChessPosition> endLocations = new ArrayList<>();
+            for(ChessMove move : game.validMoves(command.getPos())){
+                endLocations.add(move.getEndPosition());
+            }  
+            HighlightMessage message = new HighlightMessage(HIGHLIGHT, board, command.isWhite(), command.getPos(), endLocations);
             session.getRemote().sendString(new Gson().toJson(message));
             return;
         }
@@ -178,13 +173,7 @@ public class WebSocketHandler{
                     connections.broadcast(command.getAuthToken(), command.getGameID(), newBoard);
                     NotificationMessage notify = new NotificationMessage(NOTIFICATION, "Move made: " + command.getMove().toString());
                     connections.broadcast(command.getAuthToken(), command.getGameID(), notify);
-                    // check for check and checkmate
-                    if(game.isInCheckmate(oppo) || game.isInStalemate(oppo)){
-                        Thread.sleep(200);
-                        notify = new NotificationMessage(NOTIFICATION, colorToString(oppo) + " is in checkmate!!");
-                        connections.broadcast("", command.getGameID(), notify);
-                    }
-                    else if(game.isInCheck(oppo)){
+                    if(game.isInCheck(oppo)){
                         Thread.sleep(200);
                         notify = new NotificationMessage(NOTIFICATION, colorToString(oppo) + " is in check!");
                         connections.broadcast("", command.getGameID(), notify);

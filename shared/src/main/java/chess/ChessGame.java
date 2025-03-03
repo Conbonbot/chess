@@ -208,6 +208,7 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
+        boolean checkmate = false;
         // Check if any team piece can capture a piece to remove check
         if(isInCheck(teamColor)){
             ArrayList<ChessPosition> teamPositions = board.getTeamPositions(teamColor);
@@ -234,10 +235,11 @@ public class ChessGame {
                         return false;
                     }
                 }
-                return true;
+                checkmate = true;
+                //return true;
             }
         }
-        return false;
+        return checkmate;
     }
 
     /**
