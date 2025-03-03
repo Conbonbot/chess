@@ -40,6 +40,8 @@ import static websocket.messages.ServerMessage.ServerMessageType.NOTIFICATION;
 public class WebSocketHandler{
 
     private final ChessService chessService;
+    // TODO: use maps to check if check has been issued
+    
 
     public WebSocketHandler(ChessService chessService){
         this.chessService = chessService;

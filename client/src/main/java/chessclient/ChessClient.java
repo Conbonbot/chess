@@ -414,7 +414,6 @@ public class ChessClient implements ServerMessageObserver{
         checkLogin();
         checkGame();
         checkLength(line, 2);
-        // websocket
         ChessPosition pos = ClientHelper.locationToPosition(line.split(" ")[1]);
         ws = new WebSocketFacade(url, this);
         ws.highlight(authToken, userGameID, pos, isWhite);
