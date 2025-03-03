@@ -14,8 +14,6 @@ import javax.websocket.WebSocketContainer;
 
 import com.google.gson.Gson;
 
-import chess.ChessGame;
-import chess.ChessGame.TeamColor;
 import chess.ChessMove;
 import chess.ChessPosition;
 import exception.ResponseException;

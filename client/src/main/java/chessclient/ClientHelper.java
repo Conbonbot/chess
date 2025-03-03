@@ -229,60 +229,70 @@ public class ClientHelper {
         };
     }
 
-    public static void help(String username, String userGameID){
-        if(!username.isEmpty() && userGameID.isEmpty()){
-            System.out.printf("\t%screate <NAME> %s- create a game%s%n",
+    public static void help(Status status){
+        switch(status){
+            case LOGGED_IN -> {
+                System.out.printf("\t%screate <NAME> %s- create a game%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-            System.out.printf("\t%slist %s- list current games%s%n",
+                System.out.printf("\t%slist %s- list current games%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-            System.out.printf("\t%sjoin <ID> [%sWHITE%s|%sBLACK%s] %s- join a game%s%n",
+                System.out.printf("\t%sjoin <ID> [%sWHITE%s|%sBLACK%s] %s- join a game%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_WHITE,
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_BLACK, 
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-            System.out.printf("\t%sobserve <ID> %s- observe a game%s%n",
+                System.out.printf("\t%sobserve <ID> %s- observe a game%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-            System.out.printf("\t%slogout %s- logout of your current acccount%s%n",
+                System.out.printf("\t%slogout %s- logout of your current acccount%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-            System.out.printf("\t%shelp %s- show possible commands%s%n",
+                System.out.printf("\t%shelp %s- show possible commands%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-        }
-        else if(!username.isEmpty() && !userGameID.isEmpty()){
-            System.out.printf("\t%sredraw %s- redraws current chess board%s%n",
+            }
+            case IN_GAME -> {
+                System.out.printf("\t%sredraw %s- redraws current chess board%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-            System.out.printf("\t%sleave %s- leave the current chess game%s%n",
+                System.out.printf("\t%sleave %s- leave the current chess game%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-            System.out.printf("\t%smove <START> <END> <PROMOTION?>%s- moves a chess piece from start to end location." +
+                System.out.printf("\t%smove <START> <END> <PROMOTION?>%s- moves a chess piece from start to end location." +
                     "For pawns, include the promotion rank (queen, knight, rook, bishop) %s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-            System.out.printf("\t%sresign %s- Forfeit the game%s%n",
+                System.out.printf("\t%sresign %s- Forfeit the game%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-            System.out.printf("\t%shighlight <LOCATION> %s- highlights the locations a piece can move to%s%n",
+                System.out.printf("\t%shighlight <LOCATION> %s- highlights the locations a piece can move to%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-        }
-        else{
-            System.out.printf("\t%sregister <USERNAME> <PASSWORD> <EMAIL> %s- to create an account%s%n",
+            }
+            case OBSERVING -> {
+                System.out.printf("\t%sredraw %s- redraws current chess board%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-            System.out.printf("\t%slogin <USERNAME> <PASSWORD> %s- to play chess%s%n",
+                System.out.printf("\t%sleave %s- leave the current chess game%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-            System.out.printf("\t%squit %s- quit playing chess %s%n",
+            }
+            default -> {
+                System.out.printf("\t%sregister <USERNAME> <PASSWORD> <EMAIL> %s- to create an account%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
-            System.out.printf("\t%shelp %s- show possible commands%s%n",
+                System.out.printf("\t%slogin <USERNAME> <PASSWORD> %s- to play chess%s%n",
                     EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
                     EscapeSequences.FULL_COLOR_RESET);
+                System.out.printf("\t%squit %s- quit playing chess %s%n",
+                    EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
+                    EscapeSequences.FULL_COLOR_RESET);
+                System.out.printf("\t%shelp %s- show possible commands%s%n",
+                    EscapeSequences.SET_TEXT_COLOR_BLUE, EscapeSequences.SET_TEXT_COLOR_MAGENTA,
+                    EscapeSequences.FULL_COLOR_RESET);
+            }
         }
     }
 

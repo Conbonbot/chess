@@ -8,6 +8,7 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 import chess.ChessBoard;
 import chess.ChessGame;
@@ -47,7 +48,7 @@ public class WebSocketHandler{
     private final ConnectionManager connections = new ConnectionManager();
 
     @OnWebSocketMessage
-    public void onMessage(Session session, String message) throws IOException, ResponseException{
+    public void onMessage(Session session, String message) throws IOException, ResponseException, JsonSyntaxException, InterruptedException{
         UserGameCommand commandMessage = new Gson().fromJson(message, UserGameCommand.class);
         switch(commandMessage.getCommandType()){
             case CONNECT -> connect(new Gson().fromJson(message, ConnectCommand.class), session);
@@ -127,13 +128,18 @@ public class WebSocketHandler{
         session.getRemote().sendString(new Gson().toJson(message));
     }
 
-    private void makeMove(MakeMoveCommand command, Session session) throws IOException, ResponseException{
+    private void makeMove(MakeMoveCommand command, Session session) throws IOException, ResponseException, InterruptedException{
         GameData data;
         try{
             data = chessService.getData(command.getAuthToken(), command.getGameID());
         }
         catch(ResponseException ex){
             ErrorMessage message = new ErrorMessage(ERROR, "Bad authentication");
+            session.getRemote().sendString(new Gson().toJson(message));
+            return;
+        }
+        if(data.whiteUsername() == null || data.blackUsername() == null){
+            ErrorMessage message = new ErrorMessage(ERROR, "The other user has not joined.");
             session.getRemote().sendString(new Gson().toJson(message));
             return;
         }
@@ -145,6 +151,7 @@ public class WebSocketHandler{
         // check if player is part of game
         if(data.blackUsername().equals(username) || data.whiteUsername().equals(username)){
             if(startPiece != null){
+                TeamColor oppo = startPiece.getTeamColor() == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE;
                 try {
                     if(startPiece.getTeamColor() == TeamColor.WHITE && data.blackUsername().equals(username)
                     || startPiece.getTeamColor() == TeamColor.BLACK && data.whiteUsername().equals(username)){
@@ -159,6 +166,17 @@ public class WebSocketHandler{
                     connections.broadcast(command.getAuthToken(), command.getGameID(), newBoard);
                     NotificationMessage notify = new NotificationMessage(NOTIFICATION, "Move made: " + command.getMove().toString());
                     connections.broadcast(command.getAuthToken(), command.getGameID(), notify);
+                    // check for check and checkmate
+                    if(game.isInCheckmate(oppo) || game.isInStalemate(oppo)){
+                        Thread.sleep(200);
+                        notify = new NotificationMessage(NOTIFICATION, colorToString(oppo) + " is in checkmate!!");
+                        connections.broadcast("", command.getGameID(), notify);
+                    }
+                    else if(game.isInCheck(oppo)){
+                        Thread.sleep(200);
+                        notify = new NotificationMessage(NOTIFICATION, colorToString(oppo) + " is in check!");
+                        connections.broadcast("", command.getGameID(), notify);
+                    }
                     return;
                 } catch (InvalidMoveException e) {
                     // send error
@@ -226,6 +244,8 @@ public class WebSocketHandler{
         }
     }
 
-    
+    private String colorToString(TeamColor color){
+        return color == TeamColor.WHITE ? "WHITE" : "BLACK";
+    }
 
 }
