@@ -40,8 +40,7 @@ import static websocket.messages.ServerMessage.ServerMessageType.NOTIFICATION;
 public class WebSocketHandler{
 
     private final ChessService chessService;
-    // TODO: use maps to check if check has been issued
-    
+
 
     public WebSocketHandler(ChessService chessService){
         this.chessService = chessService;
@@ -146,6 +145,17 @@ public class WebSocketHandler{
             return;
         }
         ChessGame game = data.game();
+        // Check for checkmate
+        if(game.isInCheckmate(TeamColor.WHITE) || game.isInStalemate(TeamColor.WHITE)){
+            NotificationMessage notify = new NotificationMessage(NOTIFICATION, "The game is over, white is in checkmate.");
+            session.getRemote().sendString(new Gson().toJson(notify));
+            return;
+        }
+        else if(game.isInCheckmate(TeamColor.BLACK) || game.isInStalemate(TeamColor.BLACK)){
+            NotificationMessage notify = new NotificationMessage(NOTIFICATION, "The game is over, black is in checkmate.");
+            session.getRemote().sendString(new Gson().toJson(notify));
+            return;
+        }
         String username = chessService.getUsername(command.getAuthToken());
         ChessBoard board = game.getBoard();
         ChessPiece startPiece = board.getPiece(command.getMove().getStartPosition());
