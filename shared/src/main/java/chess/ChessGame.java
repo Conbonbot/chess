@@ -236,7 +236,6 @@ public class ChessGame {
                     }
                 }
                 checkmate = true;
-                //return true;
             }
         }
         return checkmate;
