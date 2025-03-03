@@ -147,12 +147,12 @@ public class WebSocketHandler{
         ChessGame game = data.game();
         // Check for checkmate
         if(game.isInCheckmate(TeamColor.WHITE) || game.isInStalemate(TeamColor.WHITE)){
-            NotificationMessage notify = new NotificationMessage(NOTIFICATION, "The game is over, white is in checkmate.");
+            ErrorMessage notify = new ErrorMessage(ERROR, "The game is over, white is in checkmate.");
             session.getRemote().sendString(new Gson().toJson(notify));
             return;
         }
         else if(game.isInCheckmate(TeamColor.BLACK) || game.isInStalemate(TeamColor.BLACK)){
-            NotificationMessage notify = new NotificationMessage(NOTIFICATION, "The game is over, black is in checkmate.");
+            ErrorMessage notify = new ErrorMessage(ERROR, "The game is over, black is in checkmate.");
             session.getRemote().sendString(new Gson().toJson(notify));
             return;
         }
